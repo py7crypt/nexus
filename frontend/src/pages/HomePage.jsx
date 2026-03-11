@@ -74,7 +74,7 @@ function WeatherStrip() {
             for (const a of apis) { try { return await a() } catch { /* next */ } }
             throw new Error('all failed')
           })()
-          lat = ip.lat; lon = ip.lon; cityName = ip.city''
+          lat = ip.lat; lon = ip.lon; cityName = ip.city
         }
 
         const weather = await _getWxByCoords(lat, lon)
