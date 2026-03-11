@@ -5,19 +5,22 @@
   "installCommand": "cd frontend && npm install",
   "framework": null,
   "functions": {
-    "api/**/*.py": {
-      "runtime": "vercel-python@3.0"
-    }
+    "api/articles.py":    { "runtime": "@vercel/python@3.0.7" },
+    "api/articles/[id].py": { "runtime": "@vercel/python@3.0.7" },
+    "api/ai-generate.py": { "runtime": "@vercel/python@3.0.7" },
+    "api/stats.py":       { "runtime": "@vercel/python@3.0.7" },
+    "api/auth.py":        { "runtime": "@vercel/python@3.0.7" }
   },
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/$1" },
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
+    { "source": "/api/articles/(.*)", "destination": "/api/articles/[id]" },
+    { "source": "/api/(.*)",          "destination": "/api/$1" },
+    { "source": "/((?!api/).*)",      "destination": "/index.html" }
   ],
   "headers": [
     {
       "source": "/api/(.*)",
       "headers": [
-        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Access-Control-Allow-Origin",  "value": "*" },
         { "key": "Access-Control-Allow-Methods", "value": "GET,POST,PUT,DELETE,OPTIONS" },
         { "key": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization" }
       ]
