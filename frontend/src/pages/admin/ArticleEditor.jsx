@@ -9,15 +9,15 @@ import Quill from 'quill'
 import 'quill/dist/quill.snow.css'
 
 export default function ArticleEditor() {
-  const { id }    = useParams()
-  const isEdit    = !!id
-  const navigate  = useNavigate()
-  const location  = useLocation()
-  const qc        = useQueryClient()
+  const { id }   = useParams()
+  const isEdit   = !!id
+  const navigate = useNavigate()
+  const location = useLocation()
+  const qc       = useQueryClient()
 
-  const editorRef = useRef(null)
-  const quillRef  = useRef(null)
-  const filledRef = useRef(false)   // true once form+quill have been populated
+  const editorRef  = useRef(null)
+  const quillRef   = useRef(null)
+  const filledRef  = useRef(false)  // prevents double-fill of Quill content
 
   const [form, setForm] = useState({
     title: '', slug: '', category: '', author: 'NEXUS Editorial',
@@ -31,23 +31,21 @@ export default function ArticleEditor() {
   const [saving, setSaving]             = useState(false)
   const [coverPreview, setCoverPreview] = useState('')
 
-  // ── Fetch article (edit mode) ──────────────────────────────────────────
-  // Article may already be in router state (navigated from create)
+  // ── Fetch article (edit mode) ─────────────────────────────────────────
   const seedArticle = location.state?.article
 
   const { data: fetchedData, isLoading } = useQuery({
-    queryKey: ['article', id],
-    queryFn:  () => fetchArticle(id),
-    enabled:  isEdit,
-    staleTime: 0,        // always re-fetch on mount so edit page is fresh
-    retry: 2,
+    queryKey:  ['article', id],
+    queryFn:   () => fetchArticle(id),
+    enabled:   isEdit,
+    staleTime: 0,
+    retry:     2,
     retryDelay: 800,
   })
 
-  // Resolve article: prefer live fetch, fall back to router state seed
   const article = fetchedData?.article || seedArticle
 
-  // ── Mount Quill once ──────────────────────────────────────────────────
+  // ── Mount Quill exactly once ──────────────────────────────────────────
   useEffect(() => {
     if (!editorRef.current || quillRef.current) return
     const q = new Quill(editorRef.current, {
@@ -57,12 +55,10 @@ export default function ArticleEditor() {
         clipboard: {
           matchers: [
             [Node.ELEMENT_NODE, (node, delta) => {
-              // Strip background-color and color from pasted content
               delta.ops = delta.ops.map(op => {
                 if (op.attributes) {
                   delete op.attributes.background
                   delete op.attributes.color
-                  // Also strip inline style background
                   if (op.attributes.style) {
                     op.attributes.style = op.attributes.style
                       .replace(/background(-color)?:[^;]+;?/gi, '')
@@ -95,19 +91,17 @@ export default function ArticleEditor() {
       setContent(html)
       setWords(wordCount(html))
     })
-  }, [])
+  }, []) // run once only
 
-  // ── Populate form + Quill when article data arrives ───────────────────
-  // Runs whenever article changes. filledRef prevents double-fill.
+  // ── Fill form + Quill when article data arrives ───────────────────────
   useEffect(() => {
     if (!article || filledRef.current) return
-    if (!quillRef.current) return  // quill not mounted yet — will retry below
-
+    if (!quillRef.current) return
     filledRef.current = true
     _fillEditor(article)
   }, [article])
 
-  // Also try after a short delay in case Quill wasn't ready on first run
+  // Retry fill after short delay if Quill wasn't ready on first run
   useEffect(() => {
     if (!article || filledRef.current) return
     const t = setTimeout(() => {
@@ -132,14 +126,16 @@ export default function ArticleEditor() {
     })
     setTags(a.tags || [])
     if (a.cover_image) setCoverPreview(a.cover_image)
-    if (a.content) {
+    if (a.content && quillRef.current) {
+      // Clear first to prevent duplication, then set content
+      quillRef.current.setContents([])
       quillRef.current.clipboard.dangerouslyPasteHTML(0, a.content)
       setContent(a.content)
       setWords(wordCount(a.content))
     }
   }
 
-  // ── Load AI draft from sessionStorage (new article only) ──────────────
+  // ── Load AI draft from sessionStorage (new article only) ─────────────
   useEffect(() => {
     if (isEdit) return
     const draft = sessionStorage.getItem('ai_draft')
@@ -172,11 +168,27 @@ export default function ArticleEditor() {
     }
   }
 
+  const handlePreview = () => {
+    const html = quillRef.current?.root?.innerHTML || content
+    const w = window.open('', '_blank')
+    w.document.write(`<!DOCTYPE html><html><head><title>Preview — ${form.title}</title>
+      <style>body{max-width:800px;margin:40px auto;font-family:Georgia,serif;line-height:1.8;padding:0 24px;color:#1a1a1a}
+      h1{font-size:2rem;margin-bottom:8px}h2{font-size:1.4rem;margin-top:2rem}
+      p{margin:1em 0}blockquote{border-left:4px solid #3b82f6;padding-left:1rem;color:#555;margin:1.5rem 0}
+      img{max-width:100%;border-radius:8px}</style></head>
+      <body><h1>${form.title}</h1>
+      <hr style="margin:1rem 0;border:none;border-top:1px solid #eee">
+      ${html}</body></html>`)
+    w.document.close()
+  }
+
   const handleSave = async (overrideStatus) => {
     if (!form.title.trim())   { toast('Title is required',    'error'); return }
     if (!form.category)       { toast('Category is required', 'error'); return }
     const html = quillRef.current?.root?.innerHTML || content
     if (!html || html === '<p><br></p>') { toast('Content is required', 'error'); return }
+
+    const isPublishing = (overrideStatus ?? form.status) === 'published'
 
     setSaving(true)
     try {
@@ -192,21 +204,11 @@ export default function ArticleEditor() {
         : await createArticle(payload)
 
       if (res.success) {
-        if (res.warning) {
-          toast(`⚠️ ${res.warning}`, 'error')
-        } else {
-          toast(isEdit ? '✅ Updated!' : '🎉 Created!', 'success')
-        }
+        toast(isPublishing ? '🚀 Published!' : '💾 Draft saved!', 'success')
         qc.invalidateQueries(['admin-articles-all'])
-        if (isEdit) {
-          // Reset fill flag so updated data reloads into the form
-          filledRef.current = false
-          qc.invalidateQueries(['article', id])
-        } else {
-          navigate(`/admin/articles/edit/${res.article.id}`, {
-            state: { article: res.article },
-          })
-        }
+
+        // Always redirect to dashboard after any save
+        navigate('/admin')
       } else {
         toast(`Error: ${res.error || 'Unknown error'}`, 'error')
       }
@@ -223,17 +225,23 @@ export default function ArticleEditor() {
 
   return (
     <div className="fade-in">
-      {/* Header */}
+      {/* ── Top bar — Save Draft | Publish | Preview ── */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-xl font-bold">{isEdit ? 'Edit Article' : 'New Article'}</h1>
           <p className="text-sm text-slate-400">{words} words · {form.status}</p>
         </div>
         <div className="flex gap-2">
-          <button onClick={() => handleSave('draft')} disabled={saving} className="btn-outline text-sm py-2">
+          <button onClick={handlePreview}
+            className="btn-outline text-sm py-2 px-4">
+            👁️ Preview
+          </button>
+          <button onClick={() => handleSave('draft')} disabled={saving}
+            className="btn-outline text-sm py-2 px-4">
             💾 Save Draft
           </button>
-          <button onClick={() => handleSave('published')} disabled={saving} className="btn-primary text-sm py-2">
+          <button onClick={() => handleSave('published')} disabled={saving}
+            className="btn-primary text-sm py-2 px-4">
             {saving ? '⏳ Saving...' : '🚀 Publish'}
           </button>
         </div>
@@ -242,6 +250,7 @@ export default function ArticleEditor() {
       <div className="grid xl:grid-cols-[1fr_290px] gap-6 items-start">
         {/* ── Main column ── */}
         <div className="space-y-5">
+          {/* Title + Slug */}
           <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5">
             <div className="mb-4">
               <label className="form-label">Title *</label>
@@ -255,7 +264,7 @@ export default function ArticleEditor() {
             </div>
           </div>
 
-          {/* Quill — never conditionally rendered */}
+          {/* Quill editor */}
           <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
             <div className="px-5 pt-4 pb-2 border-b border-slate-100 dark:border-slate-700">
               <label className="form-label mb-0">Content *</label>
@@ -266,6 +275,7 @@ export default function ArticleEditor() {
             </div>
           </div>
 
+          {/* SEO */}
           <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5">
             <h3 className="text-sm font-bold mb-4">🔍 SEO Settings</h3>
             <div className="mb-4">
@@ -290,28 +300,7 @@ export default function ArticleEditor() {
 
         {/* ── Sidebar ── */}
         <div className="space-y-4">
-          <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Publish</h3>
-            <div className="mb-3">
-              <label className="form-label">Status</label>
-              <select value={form.status} onChange={e => setField('status', e.target.value)} className="form-select">
-                <option value="draft">Draft</option>
-                <option value="published">Published</option>
-              </select>
-            </div>
-            <button onClick={() => handleSave()} disabled={saving}
-              className="btn-primary w-full justify-center text-sm py-2.5">
-              {saving ? '⏳ Saving...' : '💾 Save Article'}
-            </button>
-            <button onClick={() => {
-              const html = quillRef.current?.root?.innerHTML || content
-              const w = window.open('', '_blank')
-              w.document.write(`<!DOCTYPE html><html><head><title>Preview — ${form.title}</title><style>body{max-width:800px;margin:40px auto;font-family:Georgia,serif;line-height:1.8;padding:0 24px;color:#1a1a1a}h1{font-size:2rem;margin-bottom:8px}h2{font-size:1.4rem;margin-top:2rem}p{margin:1em 0}blockquote{border-left:4px solid #3b82f6;padding-left:1rem;color:#555;margin:1.5rem 0}</style></head><body><h1>${form.title}</h1><hr style="margin:1rem 0;border:none;border-top:1px solid #eee">${html}</body></html>`)
-            }} className="btn-outline w-full justify-center text-sm py-2 mt-2">
-              👁️ Preview
-            </button>
-          </div>
-
+          {/* Article Info */}
           <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Article Info</h3>
             <div className="space-y-3">
@@ -334,6 +323,7 @@ export default function ArticleEditor() {
             </div>
           </div>
 
+          {/* Cover Image */}
           <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">🖼️ Cover Image</h3>
             <input value={form.cover_image} onChange={e => { setField('cover_image', e.target.value); setCoverPreview(e.target.value) }}
@@ -348,6 +338,7 @@ export default function ArticleEditor() {
             </p>
           </div>
 
+          {/* Tags */}
           <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">🏷️ Tags</h3>
             <div className="flex flex-wrap gap-1.5 border-2 border-slate-200 dark:border-slate-700 rounded-lg p-2 min-h-[42px] focus-within:border-blue-500 cursor-text"
@@ -365,6 +356,7 @@ export default function ArticleEditor() {
             <p className="text-xs text-slate-400 mt-1">Press Enter to add a tag</p>
           </div>
 
+          {/* SEO Score */}
           <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">📈 SEO Score</h3>
             <SEOScore

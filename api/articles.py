@@ -28,10 +28,16 @@ class handler(BaseHTTPRequestHandler):
         self._json(200, {})
 
     def do_GET(self):
-        qs = parse_qs(urlparse(self.path).query)
+        qs        = parse_qs(urlparse(self.path).query)
+        is_admin  = verify_token(self.headers.get("Authorization", ""))
+        requested_status = qs.get("status", ["published"])[0]
+
+        # Non-admin requests can ONLY see published articles — ignore any status param
+        status = requested_status if is_admin else "published"
+
         articles, total = _run(get_all_articles(
             category=qs.get("category", [None])[0],
-            status=qs.get("status", ["published"])[0],
+            status=status,
             limit=int(qs.get("limit", [20])[0]),
             offset=int(qs.get("offset", [0])[0]),
         ))
@@ -43,7 +49,6 @@ class handler(BaseHTTPRequestHandler):
         n = int(self.headers.get("Content-Length", 0))
         body = json.loads(self.rfile.read(n)) if n else {}
 
-        # Validate required fields
         if not body.get("title", "").strip():
             return self._json(400, {"success": False, "error": "title is required"})
         if not body.get("content", "").strip():
@@ -51,8 +56,7 @@ class handler(BaseHTTPRequestHandler):
         if not body.get("category", "").strip():
             return self._json(400, {"success": False, "error": "category is required"})
 
-        # Only pass known fields — safely ignore extras like 'slug' from editor
-        data = {k: v for k, v in body.items() if k in ARTICLE_FIELDS}
+        data    = {k: v for k, v in body.items() if k in ARTICLE_FIELDS}
         article = _run(create_article(data))
         kv_saved = article.pop("_kv_saved", True)
         response = {"success": True, "article": article}
