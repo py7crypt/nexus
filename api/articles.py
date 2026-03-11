@@ -54,6 +54,10 @@ class handler(BaseHTTPRequestHandler):
         # Only pass known fields — safely ignore extras like 'slug' from editor
         data = {k: v for k, v in body.items() if k in ARTICLE_FIELDS}
         article = _run(create_article(data))
-        self._json(201, {"success": True, "article": article})
+        kv_saved = article.pop("_kv_saved", True)
+        response = {"success": True, "article": article}
+        if not kv_saved:
+            response["warning"] = "Article created but KV storage failed. Check KV_REST_API_URL and KV_REST_API_TOKEN in Vercel env vars."
+        self._json(201, response)
 
     def log_message(self, *a): pass

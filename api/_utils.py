@@ -65,12 +65,19 @@ async def kv_get(key: str) -> Optional[str]:
         return _upstash("GET", key)
     return _mem.get(key)
 
-async def kv_set(key: str, value: Any) -> None:
+async def kv_set(key: str, value: Any) -> bool:
     v = json.dumps(value) if not isinstance(value, str) else value
     if _has_kv():
-        _upstash("SET", key, v)
+        result = _upstash("SET", key, v)
+        if result == "OK":
+            return True
+        # KV failed — also store in memory as fallback
+        _mem[key] = v
+        print(f"KV SET failed for {key}, result={result}. Using memory fallback.")
+        return False
     else:
         _mem[key] = v
+        return True
 
 async def kv_del(key: str) -> None:
     if _has_kv():
@@ -78,11 +85,18 @@ async def kv_del(key: str) -> None:
     else:
         _mem.pop(key, None)
 
-async def kv_lpush(key: str, value: str) -> None:
+async def kv_lpush(key: str, value: str) -> bool:
     if _has_kv():
-        _upstash("LPUSH", key, value)
+        result = _upstash("LPUSH", key, value)
+        if result is not None and result != "ERR":
+            return True
+        # KV failed — also store in memory
+        _lists.setdefault(key, []).insert(0, value)
+        print(f"KV LPUSH failed for {key}, result={result}. Using memory fallback.")
+        return False
     else:
         _lists.setdefault(key, []).insert(0, value)
+        return True
 
 async def kv_lrange(key: str, start: int = 0, end: int = -1) -> List[str]:
     if _has_kv():
@@ -160,6 +174,7 @@ async def create_article(data: dict) -> dict:
         "created_at":      now,
         "updated_at":      now,
     }
-    await kv_set(f"article:{article_id}", json.dumps(article))
-    await kv_lpush("article:ids", article_id)
+    saved   = await kv_set(f"article:{article_id}", json.dumps(article))
+    indexed = await kv_lpush("article:ids", article_id)
+    article["_kv_saved"] = saved and indexed  # debug info, stripped by API layer
     return article

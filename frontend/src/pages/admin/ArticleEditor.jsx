@@ -1,6 +1,6 @@
 // src/pages/admin/ArticleEditor.jsx
 import { useState, useEffect, useRef } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { fetchArticle, createArticle, updateArticle } from '../../api'
 import { Spinner, SEOScore, toast } from '../../components/shared'
@@ -12,6 +12,7 @@ export default function ArticleEditor() {
   const { id } = useParams()
   const isEdit = !!id
   const navigate = useNavigate()
+  const location = useLocation()
   const qc = useQueryClient()
 
   const editorRef  = useRef(null)
@@ -32,13 +33,17 @@ export default function ArticleEditor() {
   const [editorReady, setEditorReady]   = useState(false)
 
   // ── Fetch existing article ─────────────────────────────────────────────
+  // If navigated from create, article is already in router state — no fetch needed
+  const routerArticle = location.state?.article
+
   const { data: existing, isLoading } = useQuery({
     queryKey: ['article', id],
     queryFn:  () => fetchArticle(id),
-    enabled:  isEdit,
-    staleTime: Infinity,   // don't refetch mid-edit
-    retry: 3,              // retry on 404 in case KV write is still settling
-    retryDelay: 800,
+    enabled:  isEdit && !routerArticle,  // skip fetch if we already have the data
+    staleTime: Infinity,
+    retry: 2,
+    retryDelay: 1000,
+    initialData: routerArticle ? { article: routerArticle, success: true } : undefined,
   })
 
   // ── Mount Quill exactly once ───────────────────────────────────────────
@@ -173,15 +178,18 @@ export default function ArticleEditor() {
       }
       const res = isEdit ? await updateArticle(id, payload) : await createArticle(payload)
       if (res.success) {
-        toast(isEdit ? '✅ Article updated!' : '🎉 Article created!', 'success')
+        if (res.warning) {
+          toast(`⚠️ ${res.warning}`, 'error')
+        } else {
+          toast(isEdit ? '✅ Article updated!' : '🎉 Article created!', 'success')
+        }
         qc.invalidateQueries(['admin-articles-all'])
         if (isEdit) {
-          // Refetch the article so editor reloads with saved data
           qc.invalidateQueries(['article', id])
         } else {
-          // Small delay so KV write settles before we navigate + fetch
-          await new Promise(r => setTimeout(r, 600))
-          navigate(`/admin/articles/edit/${res.article.id}`)
+          navigate(`/admin/articles/edit/${res.article.id}`, {
+            state: { article: res.article }
+          })
         }
       } else {
         toast(`Error: ${res.error || 'Unknown error'}`, 'error')
