@@ -1,11 +1,11 @@
 """
-Shared utilities — auth, KV storage via Upstash REST (correct POST+JSON format), in-memory fallback
+Shared utilities — auth, KV via Upstash REST, in-memory fallback
 """
 import os, json, uuid
 from datetime import datetime, timezone
 from typing import Optional, List, Any
 
-# ─── AUTH ──────────────────────────────────────────────────────────────────
+# ─── AUTH ───────────────────────────────────────────────────────────────────
 
 ADMIN_SECRET = os.environ.get("ADMIN_SECRET", "nexus-admin-2025")
 ADMIN_USER   = os.environ.get("ADMIN_USERNAME", "admin")
@@ -18,44 +18,37 @@ def verify_token(authorization: str) -> bool:
 def verify_password(username: str, password: str) -> bool:
     return username == ADMIN_USER and password == ADMIN_PASS
 
-# ─── IN-MEMORY STORE (fallback when KV not configured) ─────────────────────
-_mem: dict   = {}
+# ─── IN-MEMORY FALLBACK ─────────────────────────────────────────────────────
+_mem:   dict = {}
 _lists: dict = {}
 
 def _has_kv() -> bool:
     return bool(os.environ.get("KV_REST_API_URL") and os.environ.get("KV_REST_API_TOKEN"))
 
-# ─── UPSTASH REST — correct format ─────────────────────────────────────────
-# POST to base URL with JSON array body: ["COMMAND", "arg1", "arg2", ...]
-# Ref: https://upstash.com/docs/redis/features/restapi
+# ─── UPSTASH REST ───────────────────────────────────────────────────────────
+# POST to base URL, body = JSON array ["COMMAND", "arg1", "arg2", ...]
 
 def _upstash(*args) -> Any:
-    """Execute a Redis command via Upstash REST API (POST + JSON array body)."""
     import urllib.request, urllib.error
-    base_url = os.environ.get("KV_REST_API_URL", "").rstrip("/")
-    token    = os.environ.get("KV_REST_API_TOKEN", "")
-    if not base_url or not token:
+    base  = os.environ.get("KV_REST_API_URL", "").rstrip("/")
+    token = os.environ.get("KV_REST_API_TOKEN", "")
+    if not base or not token:
         return None
-
     payload = json.dumps(list(args)).encode()
     req = urllib.request.Request(
-        base_url,
+        base,
         data=payload,
-        headers={
-            "Authorization": f"Bearer {token}",
-            "Content-Type":  "application/json",
-        },
+        headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
         method="POST",
     )
     try:
         with urllib.request.urlopen(req, timeout=10) as resp:
-            data = json.loads(resp.read().decode())
-            return data.get("result")
+            return json.loads(resp.read().decode()).get("result")
     except urllib.error.HTTPError as e:
-        print(f"Upstash HTTP error {e.code}: {e.read().decode()[:300]}")
+        print(f"[KV] HTTP {e.code}: {e.read().decode()[:200]}")
         return None
     except Exception as e:
-        print(f"Upstash error: {e}")
+        print(f"[KV] Error: {e}")
         return None
 
 # ─── KV INTERFACE ───────────────────────────────────────────────────────────
@@ -66,14 +59,21 @@ async def kv_get(key: str) -> Optional[str]:
     return _mem.get(key)
 
 async def kv_set(key: str, value: Any) -> bool:
-    v = json.dumps(value) if not isinstance(value, str) else value
+    # Always store as a plain JSON string — never double-encode
+    if isinstance(value, (dict, list)):
+        v = json.dumps(value)
+    elif isinstance(value, str):
+        v = value
+    else:
+        v = json.dumps(value)
+
     if _has_kv():
         result = _upstash("SET", key, v)
         if result == "OK":
             return True
-        # KV failed — also store in memory as fallback
+        # KV write failed — keep in memory as session fallback
         _mem[key] = v
-        print(f"KV SET failed for {key}, result={result}. Using memory fallback.")
+        print(f"[KV] SET failed for {key!r}: result={result!r}")
         return False
     else:
         _mem[key] = v
@@ -82,17 +82,15 @@ async def kv_set(key: str, value: Any) -> bool:
 async def kv_del(key: str) -> None:
     if _has_kv():
         _upstash("DEL", key)
-    else:
-        _mem.pop(key, None)
+    _mem.pop(key, None)
 
 async def kv_lpush(key: str, value: str) -> bool:
     if _has_kv():
-        result = _upstash("LPUSH", key, value)
-        if result is not None and result != "ERR":
+        result = _upstash("LPUSH", key, str(value))
+        if isinstance(result, int):   # LPUSH returns new list length on success
             return True
-        # KV failed — also store in memory
         _lists.setdefault(key, []).insert(0, value)
-        print(f"KV LPUSH failed for {key}, result={result}. Using memory fallback.")
+        print(f"[KV] LPUSH failed for {key!r}: result={result!r}")
         return False
     else:
         _lists.setdefault(key, []).insert(0, value)
@@ -107,24 +105,38 @@ async def kv_lrange(key: str, start: int = 0, end: int = -1) -> List[str]:
 
 async def kv_lrem(key: str, value: str) -> None:
     if _has_kv():
-        _upstash("LREM", key, 0, value)
-    else:
-        if key in _lists:
-            _lists[key] = [v for v in _lists[key] if v != value]
+        _upstash("LREM", key, 0, str(value))
+    if key in _lists:
+        _lists[key] = [v for v in _lists[key] if v != value]
 
-# ─── ARTICLE FIELDS ────────────────────────────────────────────────────────
+# ─── ARTICLE HELPERS ────────────────────────────────────────────────────────
 
 ARTICLE_FIELDS = {
     "title", "content", "excerpt", "category", "author",
     "tags", "status", "cover_image", "seo_title", "seo_description", "slug"
 }
 
-# ─── ARTICLE HELPERS ───────────────────────────────────────────────────────
-
 def make_slug(title: str, article_id: str) -> str:
     base = "".join(c if c.isalnum() or c in " -" else "" for c in title.lower())
     base = "-".join(base.split())[:80]
     return f"{base}-{article_id[:6]}"
+
+def _parse_article(raw: Any) -> Optional[dict]:
+    """Safely parse an article from KV — handles string or dict."""
+    if raw is None:
+        return None
+    if isinstance(raw, dict):
+        return raw
+    if isinstance(raw, str):
+        try:
+            parsed = json.loads(raw)
+            # Sometimes Upstash double-encodes — unwrap if needed
+            if isinstance(parsed, str):
+                parsed = json.loads(parsed)
+            return parsed if isinstance(parsed, dict) else None
+        except Exception:
+            return None
+    return None
 
 async def get_all_articles(
     category: Optional[str] = None,
@@ -136,12 +148,9 @@ async def get_all_articles(
     articles = []
     for aid in ids:
         raw = await kv_get(f"article:{aid}")
-        if raw:
-            try:
-                a = json.loads(raw) if isinstance(raw, str) else raw
-                articles.append(a)
-            except Exception:
-                pass
+        a = _parse_article(raw)
+        if a:
+            articles.append(a)
 
     if status and status != "all":
         articles = [a for a in articles if a.get("status") == status]
@@ -174,7 +183,7 @@ async def create_article(data: dict) -> dict:
         "created_at":      now,
         "updated_at":      now,
     }
-    saved   = await kv_set(f"article:{article_id}", json.dumps(article))
+    saved   = await kv_set(f"article:{article_id}", article)
     indexed = await kv_lpush("article:ids", article_id)
-    article["_kv_saved"] = saved and indexed  # debug info, stripped by API layer
+    article["_kv_saved"] = saved and indexed
     return article
