@@ -58,9 +58,7 @@ export default function PublicLayout() {
               className="p-2 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
               {dark ? '☀️' : '🌙'}
             </button>
-            <Link to="/admin" className="hidden sm:inline-flex btn-primary text-xs py-1.5 px-3">
-              Admin
-            </Link>
+
             <button className="lg:hidden p-2 rounded-lg text-slate-500" onClick={()=>setMenuOpen(o=>!o)}>
               ☰
             </button>

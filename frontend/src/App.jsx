@@ -16,6 +16,7 @@ import ArticlesList   from './pages/admin/ArticlesList'
 import ArticleEditor  from './pages/admin/ArticleEditor'
 import AIGenerator    from './pages/admin/AIGenerator'
 import Settings       from './pages/admin/Settings'
+import Categories     from './pages/admin/Categories'
 
 function ProtectedRoute({ children }) {
   const { auth } = useApp()
@@ -41,6 +42,7 @@ export default function App() {
           <Route path="articles/new" element={<ArticleEditor />} />
           <Route path="articles/edit/:id" element={<ArticleEditor />} />
           <Route path="ai" element={<AIGenerator />} />
+          <Route path="categories" element={<Categories />} />
           <Route path="settings" element={<Settings />} />
         </Route>
       </Routes>
