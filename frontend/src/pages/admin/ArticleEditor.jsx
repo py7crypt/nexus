@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { fetchArticle, createArticle, updateArticle } from '../../api'
 import { Spinner, SEOScore, toast } from '../../components/shared'
-import { CATEGORIES, slugify, wordCount } from '../../utils'
+import { getCategories, slugify, wordCount } from '../../utils'
 import Quill from 'quill'
 import 'quill/dist/quill.snow.css'
 
@@ -256,7 +256,7 @@ export default function ArticleEditor() {
                 <label className="form-label">Category *</label>
                 <select value={form.category} onChange={e => setField('category', e.target.value)} className="form-select">
                   <option value="">Select category...</option>
-                  {CATEGORIES.map(c => <option key={c}>{c}</option>)}
+                  {getCategories().map(c => <option key={c.name}>{c.name}</option>)}
                 </select>
               </div>
               <div>

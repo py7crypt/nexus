@@ -3,11 +3,12 @@ import { useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { fetchArticles } from '../api'
 import { ArticleCard, Spinner } from '../components/shared'
-import { CATEGORIES, CAT_COLORS } from '../utils'
+import { getCategories, catColor } from '../utils'
 
 export default function CategoryPage() {
   const { slug } = useParams()
-  const category = CATEGORIES.find(c => c.toLowerCase() === slug?.toLowerCase()) || slug
+  const cats = getCategories()
+  const category = cats.find(c => c.name.toLowerCase() === slug?.toLowerCase())?.name || slug
 
   const { data, isLoading } = useQuery({
     queryKey: ['articles', category],
@@ -15,7 +16,7 @@ export default function CategoryPage() {
     enabled: !!category,
   })
 
-  const color = CAT_COLORS[category] || '#1E73FF'
+  const color = catColor(category)
   const articles = data?.articles || []
 
   return (

@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom'
 import { fetchAllArticles, deleteArticle } from '../../api'
 import { Spinner, StatusPill } from '../../components/shared'
 import { toast } from '../../components/shared'
-import { formatDate, CAT_COLORS, CATEGORIES } from '../../utils'
+import { formatDate, catColor, getCategories } from '../../utils'
 
 export default function ArticlesList() {
   const qc = useQueryClient()
@@ -56,7 +56,7 @@ export default function ArticlesList() {
           className="form-input max-w-xs" placeholder="🔍 Search articles..."/>
         <select value={catFilter} onChange={e=>setCatFilter(e.target.value)} className="form-select w-auto">
           <option value="">All Categories</option>
-          {CATEGORIES.map(c=><option key={c}>{c}</option>)}
+          {getCategories().map(c=><option key={c.name}>{c.name}</option>)}
         </select>
         <select value={statusFilter} onChange={e=>setStatusFilter(e.target.value)} className="form-select w-auto">
           <option value="all">All Status</option>
@@ -86,7 +86,7 @@ export default function ArticlesList() {
             </div>
             <div>
               <span className="text-xs font-semibold px-2 py-0.5 rounded-full text-white"
-                style={{ background: CAT_COLORS[a.category]||'#1E73FF' }}>
+                style={{ background: catColor(a.category) }}>
                 {a.category}
               </span>
             </div>

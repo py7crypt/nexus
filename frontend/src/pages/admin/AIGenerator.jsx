@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { generateAI, createArticle } from '../../api'
 import { Spinner, toast, CatBadge } from '../../components/shared'
-import { CATEGORIES } from '../../utils'
+import { getCategories } from '../../utils'
 
 const TONES   = ['professional','casual','investigative','educational','analytical','narrative']
 const LENGTHS = [['short','~400w'],['medium','~800w'],['long','~1500w']]
@@ -136,7 +136,7 @@ export default function AIGenerator() {
               <label className="form-label">Category</label>
               <select value={form.category} onChange={e=>setForm(f=>({...f,category:e.target.value}))}
                 className="form-select">
-                {CATEGORIES.map(c=><option key={c}>{c}</option>)}
+                {getCategories().map(c=><option key={c.name}>{c.name}</option>)}
               </select>
             </div>
 

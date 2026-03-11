@@ -4,22 +4,17 @@
   "outputDirectory": "frontend/dist",
   "installCommand": "cd frontend && npm install",
   "framework": null,
-  "routes": [
-    { "src": "/api/articles/(.+)", "dest": "/api/articles/[id]" },
-    { "src": "/api/articles",      "dest": "/api/articles" },
-    { "src": "/api/auth",          "dest": "/api/auth" },
-    { "src": "/api/stats",         "dest": "/api/stats" },
-    { "src": "/api/ai-generate",   "dest": "/api/ai-generate" },
+  "rewrites": [
+    { "source": "/api/articles/(.+)", "destination": "/api/articles/[id]" }
+  ],
+  "headers": [
     {
-      "src": "/api/(.*)",
-      "headers": {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type, Authorization"
-      },
-      "continue": true
-    },
-    { "handle": "filesystem" },
-    { "src": "/(.*)", "dest": "/index.html" }
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin",  "value": "*" },
+        { "key": "Access-Control-Allow-Methods", "value": "GET,POST,PUT,DELETE,OPTIONS" },
+        { "key": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization" }
+      ]
+    }
   ]
 }
