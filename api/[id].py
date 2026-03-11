@@ -1,6 +1,6 @@
 import sys, os, json, asyncio
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
-from _utils import verify_token, get_all_articles, kv_get, kv_set, kv_del, kv_lrem
+from _utils import verify_token, get_all_articles, kv_get, kv_set, kv_del, kv_lrem, ARTICLE_FIELDS
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler
 from urllib.parse import urlparse
@@ -12,18 +12,17 @@ def _run(c):
     return r
 
 def _get_id(path):
-    # Reliably extract the last path segment, ignoring query string
-    return urlparse(path).path.rstrip('/').split('/')[-1]
+    return urlparse(path).path.rstrip("/").split("/")[-1]
 
 def _load_article(article_id):
-    # Try by UUID first
+    # Try by UUID key first
     raw = _run(kv_get(f"article:{article_id}"))
     if raw:
         return json.loads(raw) if isinstance(raw, str) else raw
-    # Fallback: search by slug
+    # Fallback: scan all articles for matching id or slug
     arts, _ = _run(get_all_articles(status="all", limit=1000))
     for a in arts:
-        if a.get("slug") == article_id or a.get("id") == article_id:
+        if a.get("id") == article_id or a.get("slug") == article_id:
             return a
     return None
 
@@ -62,8 +61,8 @@ class handler(BaseHTTPRequestHandler):
             return self._json(404, {"success": False, "error": "Article not found"})
         n = int(self.headers.get("Content-Length", 0))
         body = json.loads(self.rfile.read(n)) if n else {}
-        allowed = ["title","content","excerpt","category","author","tags","status","cover_image","seo_title","seo_description"]
-        for k in allowed:
+        # Update only known fields — ignore extras
+        for k in ARTICLE_FIELDS:
             if k in body and body[k] is not None:
                 a[k] = body[k]
         a["updated_at"] = datetime.now(timezone.utc).isoformat()
@@ -78,7 +77,7 @@ class handler(BaseHTTPRequestHandler):
         if not a:
             return self._json(404, {"success": False, "error": "Article not found"})
         _run(kv_del(f"article:{a['id']}"))
-        _run(kv_lrem("article:ids", a['id']))
+        _run(kv_lrem("article:ids", a["id"]))
         self._json(200, {"success": True, "message": "Deleted"})
 
     def log_message(self, *a): pass

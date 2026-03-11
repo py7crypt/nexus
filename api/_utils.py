@@ -1,36 +1,9 @@
 """
-Shared utilities — models, auth, KV storage (sync urllib for Vercel compatibility)
+Shared utilities — models, auth, KV storage (sync urllib, zero pip deps)
 """
 import os, json, uuid
 from datetime import datetime, timezone
 from typing import Optional, List, Any
-from pydantic import BaseModel
-
-# ─── MODELS ────────────────────────────────────────────────────────────────
-
-class ArticleCreate(BaseModel):
-    title: str
-    content: str
-    excerpt: Optional[str] = ""
-    category: str
-    author: Optional[str] = "NEXUS Editorial"
-    tags: Optional[List[str]] = []
-    status: Optional[str] = "published"
-    cover_image: Optional[str] = ""
-    seo_title: Optional[str] = ""
-    seo_description: Optional[str] = ""
-
-class ArticleUpdate(BaseModel):
-    title: Optional[str] = None
-    content: Optional[str] = None
-    excerpt: Optional[str] = None
-    category: Optional[str] = None
-    author: Optional[str] = None
-    tags: Optional[List[str]] = None
-    status: Optional[str] = None
-    cover_image: Optional[str] = None
-    seo_title: Optional[str] = None
-    seo_description: Optional[str] = None
 
 # ─── AUTH ──────────────────────────────────────────────────────────────────
 
@@ -49,12 +22,11 @@ def verify_password(username: str, password: str) -> bool:
 _mem: dict = {}
 _lists: dict = {}
 
-# ─── KV HELPERS (sync urllib, works in Vercel serverless) ──────────────────
+# ─── KV HELPERS (sync urllib — zero external deps) ─────────────────────────
 
 def _kv_request(method: str, path: str, body=None) -> Any:
-    """Make a sync HTTP request to Upstash Redis REST API."""
     import urllib.request
-    url = os.environ.get("KV_REST_API_URL", "")
+    url   = os.environ.get("KV_REST_API_URL", "")
     token = os.environ.get("KV_REST_API_TOKEN", "")
     if not url or not token:
         return None
@@ -73,7 +45,7 @@ def _kv_request(method: str, path: str, body=None) -> Any:
 def _has_kv() -> bool:
     return bool(os.environ.get("KV_REST_API_URL") and os.environ.get("KV_REST_API_TOKEN"))
 
-# All storage functions are sync (Vercel Python runs sync handlers fine)
+# Async wrappers kept for compatibility with existing callers
 async def kv_get(key: str) -> Optional[Any]:
     if _has_kv():
         return _kv_request("GET", f"/get/{key}")
@@ -114,6 +86,12 @@ async def kv_lrem(key: str, value: str) -> None:
 
 # ─── ARTICLE HELPERS ───────────────────────────────────────────────────────
 
+# Fields accepted when creating/updating articles
+ARTICLE_FIELDS = {
+    "title", "content", "excerpt", "category", "author",
+    "tags", "status", "cover_image", "seo_title", "seo_description", "slug"
+}
+
 def make_slug(title: str, article_id: str) -> str:
     base = "".join(c if c.isalnum() or c in " -" else "" for c in title.lower())
     base = "-".join(base.split())[:80]
@@ -136,31 +114,33 @@ async def get_all_articles(
     if status and status != "all":
         articles = [a for a in articles if a.get("status") == status]
     if category:
-        articles = [a for a in articles if a.get("category") == category]
+        articles = [a for a in articles if a.get("category", "").lower() == category.lower()]
 
     articles.sort(key=lambda a: a.get("created_at", ""), reverse=True)
     total = len(articles)
     return articles[offset: offset + limit], total
 
-async def create_article(data: ArticleCreate) -> dict:
+async def create_article(data: dict) -> dict:
     article_id = str(uuid.uuid4())
-    now = datetime.now(timezone.utc).isoformat()
+    now        = datetime.now(timezone.utc).isoformat()
+    title      = data.get("title", "")
+    content    = data.get("content", "")
     article = {
-        "id": article_id,
-        "slug": make_slug(data.title, article_id),
-        "title": data.title,
-        "content": data.content,
-        "excerpt": data.excerpt or data.content.replace("<", " <").replace(">", "> ")[:200],
-        "category": data.category,
-        "author": data.author or "NEXUS Editorial",
-        "tags": data.tags or [],
-        "status": data.status or "published",
-        "cover_image": data.cover_image or "",
-        "seo_title": data.seo_title or data.title,
-        "seo_description": data.seo_description or "",
-        "views": 0,
-        "created_at": now,
-        "updated_at": now,
+        "id":              article_id,
+        "slug":            data.get("slug") or make_slug(title, article_id),
+        "title":           title,
+        "content":         content,
+        "excerpt":         data.get("excerpt") or content.replace("<", " <").replace(">", "> ")[:200],
+        "category":        data.get("category", ""),
+        "author":          data.get("author") or "NEXUS Editorial",
+        "tags":            data.get("tags") or [],
+        "status":          data.get("status") or "published",
+        "cover_image":     data.get("cover_image") or "",
+        "seo_title":       data.get("seo_title") or title,
+        "seo_description": data.get("seo_description") or "",
+        "views":           0,
+        "created_at":      now,
+        "updated_at":      now,
     }
     await kv_set(f"article:{article_id}", json.dumps(article))
     await kv_lpush("article:ids", article_id)
