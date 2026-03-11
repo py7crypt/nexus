@@ -1,7 +1,7 @@
 // src/pages/admin/ScrapeSettings.jsx
 import { useState, useEffect } from 'react'
 import { toast } from '../../components/shared'
-import { request } from '../../api'
+import { fetchScrapeSettings, saveScrapeSettings } from '../../api'
 
 const CATEGORIES = ['', 'Technology', 'Science', 'Business', 'Health', 'Politics', 'Sports', 'Entertainment', 'Travel', 'Culture']
 
@@ -45,10 +45,7 @@ export default function ScrapeSettings() {
   const [newSite, setNewSite] = useState({ name: '', rss_url: '', category: '' })
 
   useEffect(() => {
-    fetch('/api/scrape-settings', {
-      headers: { Authorization: `Bearer ${localStorage.getItem('nexus_token') || ''}` }
-    })
-      .then(r => r.json())
+    fetchScrapeSettings()
       .then(d => { if (d.success) setSettings(d.settings) })
       .catch(() => {})
       .finally(() => setLoading(false))
@@ -57,14 +54,7 @@ export default function ScrapeSettings() {
   const save = async (cfg = settings) => {
     setSaving(true)
     try {
-      const res = await fetch('/api/scrape-settings', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('nexus_token') || ''}`,
-        },
-        body: JSON.stringify(cfg),
-      }).then(r => r.json())
+      const res = await saveScrapeSettings(cfg)
       if (res.success) { setSettings(res.settings); toast('✅ Saved!', 'success') }
       else toast(`Error: ${res.error}`, 'error')
     } catch(e) { toast(`Error: ${e.message}`, 'error') }
