@@ -75,10 +75,21 @@ def _load_settings():
         pass
     return dict(DEFAULTS)
 
+def _resolve_url(url):
+    """Follow redirects to get the final destination URL."""
+    try:
+        req = urllib.request.Request(url, headers=HEADERS, method="HEAD")
+        with urllib.request.urlopen(req, timeout=8) as r:
+            return r.url  # urllib follows redirects automatically, r.url is final
+    except Exception:
+        return url
+
 def _get(url, timeout=10):
     req = urllib.request.Request(url, headers=HEADERS)
     with urllib.request.urlopen(req, timeout=timeout) as r:
-        return r.read(600_000).decode("utf-8", errors="replace")
+        final_url = r.url  # actual URL after redirects
+        content   = r.read(600_000).decode("utf-8", errors="replace")
+    return content, final_url
 
 # ── RSS parser ────────────────────────────────────────────────────────────────
 
@@ -209,12 +220,15 @@ def _parse_rss(xml_text, source_name="", default_category="", max_items=10):
     return articles
 
 def _fetch_rss(url, source_name="", default_category="", max_items=10):
-    return _parse_rss(_get(url), source_name=source_name, default_category=default_category, max_items=max_items)
+    html, _ = _get(url)
+    return _parse_rss(html, source_name=source_name, default_category=default_category, max_items=max_items)
 
 # ── Article meta scraper ──────────────────────────────────────────────────────
 
 def _scrape_article(url, min_chars=60):
-    html = _get(url, timeout=10)
+    # Follow redirects first (critical for Google News links)
+    html, final_url = _get(url, timeout=10)
+    url = final_url  # use final URL for source attribution
     if HAS_BS4:
         soup = BeautifulSoup(html, "html.parser")
 
