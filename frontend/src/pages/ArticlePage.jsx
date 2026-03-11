@@ -1,5 +1,5 @@
 // src/pages/ArticlePage.jsx
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { fetchArticle, fetchArticles } from '../api'
@@ -8,6 +8,10 @@ import { formatDate, catColor } from '../utils'
 
 export default function ArticlePage() {
   const { id } = useParams()
+
+  // ── All hooks must be at the top, before any early returns ──
+  const [copied, setCopied] = useState(false)
+
   const { data, isLoading, error } = useQuery({
     queryKey: ['article', id],
     queryFn:  () => fetchArticle(id),
@@ -23,6 +27,7 @@ export default function ArticlePage() {
     enabled:  !!article?.category,
   })
 
+  // ── Early returns after all hooks ──
   if (isLoading) return (
     <div className="flex justify-center items-center py-32"><Spinner size="lg"/></div>
   )
@@ -37,31 +42,28 @@ export default function ArticlePage() {
     </div>
   )
 
-  const a = article
-  const articleUrl   = encodeURIComponent(window.location.href)
-  const articleTitle = encodeURIComponent(a.title)
+  const a          = article
+  const rawUrl     = window.location.href
+  const encUrl     = encodeURIComponent(rawUrl)
+  const encTitle   = encodeURIComponent(a.title)
 
-  const rawUrl   = window.location.href
-  const encUrl   = encodeURIComponent(rawUrl)
-  const encTitle = encodeURIComponent(a.title)
-
-  // Fixed share buttons — never affected by admin social media settings
+  // Fixed share buttons — completely independent of admin social media settings
   const shareLinks = [
-    { label: 'Twitter',   icon: 'https://cdn.simpleicons.org/x/000000',         shareUrl: `https://twitter.com/intent/tweet?text=${encTitle}&url=${encUrl}` },
-    { label: 'Facebook',  icon: 'https://cdn.simpleicons.org/facebook/1877F2',  shareUrl: `https://www.facebook.com/sharer/sharer.php?u=${encUrl}` },
-    { label: 'LinkedIn',  icon: 'https://cdn.simpleicons.org/linkedin/0A66C2',  shareUrl: `https://www.linkedin.com/sharing/share-offsite/?url=${encUrl}` },
-    { label: 'WhatsApp',  icon: 'https://cdn.simpleicons.org/whatsapp/25D366',  shareUrl: `https://wa.me/?text=${encTitle}%20${encUrl}` },
-    { label: 'Telegram',  icon: 'https://cdn.simpleicons.org/telegram/26A5E4',  shareUrl: `https://t.me/share/url?url=${encUrl}&text=${encTitle}` },
-    { label: 'Reddit',    icon: 'https://cdn.simpleicons.org/reddit/FF4500',    shareUrl: `https://www.reddit.com/submit?url=${encUrl}&title=${encTitle}` },
+    { label: 'Twitter',  icon: 'https://cdn.simpleicons.org/x/000000',        shareUrl: `https://twitter.com/intent/tweet?text=${encTitle}&url=${encUrl}` },
+    { label: 'Facebook', icon: 'https://cdn.simpleicons.org/facebook/1877F2', shareUrl: `https://www.facebook.com/sharer/sharer.php?u=${encUrl}` },
+    { label: 'LinkedIn', icon: 'https://cdn.simpleicons.org/linkedin/0A66C2', shareUrl: `https://www.linkedin.com/sharing/share-offsite/?url=${encUrl}` },
+    { label: 'WhatsApp', icon: 'https://cdn.simpleicons.org/whatsapp/25D366', shareUrl: `https://wa.me/?text=${encTitle}%20${encUrl}` },
+    { label: 'Telegram', icon: 'https://cdn.simpleicons.org/telegram/26A5E4', shareUrl: `https://t.me/share/url?url=${encUrl}&text=${encTitle}` },
+    { label: 'Reddit',   icon: 'https://cdn.simpleicons.org/reddit/FF4500',   shareUrl: `https://www.reddit.com/submit?url=${encUrl}&title=${encTitle}` },
   ]
 
-  const [copied, setCopied] = useState(false)
   const handleCopy = () => {
     navigator.clipboard.writeText(rawUrl).then(() => {
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     })
   }
+
   const handleNativeShare = () => {
     navigator.share({ title: a.title, url: rawUrl }).catch(() => {})
   }
@@ -112,7 +114,7 @@ export default function ArticlePage() {
             </div>
           </div>
 
-          {/* Content — no cover image */}
+          {/* Content */}
           <div className="prose prose-slate dark:prose-invert max-w-none
             prose-headings:font-display prose-headings:font-bold
             prose-h2:text-2xl prose-h2:mt-8 prose-h2:mb-3
@@ -140,6 +142,7 @@ export default function ArticlePage() {
 
         {/* Sidebar */}
         <aside className="space-y-6">
+          {/* Related Articles */}
           {related?.articles?.filter(r => r.id !== a.id).length > 0 && (
             <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5">
               <h3 className="text-xs font-bold uppercase tracking-wider border-b-2 border-blue-500 pb-2 mb-4">Related Articles</h3>
@@ -167,24 +170,18 @@ export default function ArticlePage() {
           <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5">
             <h3 className="text-xs font-bold uppercase tracking-wider border-b-2 border-blue-500 pb-2 mb-4">Share This Article</h3>
 
-            {/* Social platform buttons */}
-            {shareLinks.length > 0 && (
-              <div className="grid grid-cols-3 gap-2 mb-3">
-                {shareLinks.map(({ icon, label, shareUrl }) => (
-                  <button key={label}
-                    onClick={() => window.open(shareUrl, '_blank', 'width=600,height=400')}
-                    className="flex flex-col items-center py-2.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-blue-600 hover:text-white transition-colors text-xs font-bold gap-1.5 group">
-                    <div className="w-6 h-6 flex items-center justify-center">
-                      {icon && icon.startsWith('http')
-                        ? <img src={icon} alt={label} className="w-5 h-5 object-contain group-hover:brightness-0 group-hover:invert transition-all"/>
-                        : <span className="text-base">{icon || '🔗'}</span>
-                      }
-                    </div>
-                    <span>{label}</span>
-                  </button>
-                ))}
-              </div>
-            )}
+            <div className="grid grid-cols-3 gap-2 mb-3">
+              {shareLinks.map(({ icon, label, shareUrl }) => (
+                <button key={label}
+                  onClick={() => window.open(shareUrl, '_blank', 'width=600,height=400')}
+                  className="flex flex-col items-center py-2.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-blue-600 hover:text-white transition-colors text-xs font-bold gap-1.5 group">
+                  <div className="w-6 h-6 flex items-center justify-center">
+                    <img src={icon} alt={label} className="w-5 h-5 object-contain group-hover:brightness-0 group-hover:invert transition-all"/>
+                  </div>
+                  <span>{label}</span>
+                </button>
+              ))}
+            </div>
 
             {/* Copy link */}
             <button onClick={handleCopy}
@@ -195,7 +192,7 @@ export default function ArticlePage() {
               </span>
             </button>
 
-            {/* Native share (mobile) */}
+            {/* Native share — mobile only */}
             {typeof navigator !== 'undefined' && navigator.share && (
               <button onClick={handleNativeShare}
                 className="w-full py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors">
@@ -204,7 +201,7 @@ export default function ArticlePage() {
             )}
           </div>
 
-          {/* Weather Card */}
+          {/* Weather */}
           <WeatherCard />
         </aside>
       </div>
