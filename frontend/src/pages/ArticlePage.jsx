@@ -1,12 +1,14 @@
 // src/pages/ArticlePage.jsx
+import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { fetchArticle, fetchArticles } from '../api'
-import { Spinner, ArticleCard, CatBadge } from '../components/shared'
+import { Spinner } from '../components/shared'
 import { formatDate, catColor } from '../utils'
 
 export default function ArticlePage() {
   const { id } = useParams()
+  const [social, setSocial] = useState({})
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['article', id],
@@ -23,6 +25,13 @@ export default function ArticlePage() {
     enabled:  !!article?.category,
   })
 
+  useEffect(() => {
+    fetch('/api/social')
+      .then(r => r.json())
+      .then(d => { if (d.success) setSocial(d.social) })
+      .catch(() => {})
+  }, [])
+
   if (isLoading) return (
     <div className="flex justify-center items-center py-32"><Spinner size="lg"/></div>
   )
@@ -38,6 +47,14 @@ export default function ArticlePage() {
   )
 
   const a = article
+  const articleUrl   = encodeURIComponent(window.location.href)
+  const articleTitle = encodeURIComponent(a.title)
+
+  const shareLinks = [
+    { icon: '𝕏',  label: 'Twitter',  url: social.twitter  || `https://twitter.com/intent/tweet?text=${articleTitle}&url=${articleUrl}` },
+    { icon: 'f',  label: 'Facebook', url: social.facebook  || `https://www.facebook.com/sharer/sharer.php?u=${articleUrl}` },
+    { icon: 'in', label: 'LinkedIn', url: social.linkedin  || `https://www.linkedin.com/sharing/share-offsite/?url=${articleUrl}` },
+  ]
 
   return (
     <div className="max-w-[1280px] mx-auto px-5 py-8">
@@ -84,14 +101,7 @@ export default function ArticlePage() {
             </div>
           </div>
 
-          {/* Cover */}
-          {a.cover_image && (
-            <div className="rounded-2xl overflow-hidden mb-8 aspect-video">
-              <img src={a.cover_image} alt={a.title} className="w-full h-full object-cover"/>
-            </div>
-          )}
-
-          {/* Content */}
+          {/* Content — no cover image */}
           <div className="prose prose-slate dark:prose-invert max-w-none
             prose-headings:font-display prose-headings:font-bold
             prose-h2:text-2xl prose-h2:mt-8 prose-h2:mb-3
@@ -142,12 +152,13 @@ export default function ArticlePage() {
             </div>
           )}
 
+          {/* Share — uses social URLs from /api/social */}
           <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5">
             <h3 className="text-xs font-bold uppercase tracking-wider border-b-2 border-blue-500 pb-2 mb-4">Share</h3>
             <div className="grid grid-cols-3 gap-2">
-              {[['𝕏','Twitter'],['f','Facebook'],['in','LinkedIn']].map(([icon, label]) => (
+              {shareLinks.map(({ icon, label, url }) => (
                 <button key={label}
-                  onClick={() => label === 'Twitter' && window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(a.title)}&url=${encodeURIComponent(window.location.href)}`, '_blank')}
+                  onClick={() => window.open(url, '_blank')}
                   className="flex flex-col items-center py-2 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-blue-600 hover:text-white transition-colors text-xs font-bold gap-1">
                   <span className="text-base">{icon}</span>
                   <span>{label}</span>

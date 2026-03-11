@@ -16,6 +16,7 @@ import ArticlesList   from './pages/admin/ArticlesList'
 import ArticleEditor  from './pages/admin/ArticleEditor'
 import AIGenerator    from './pages/admin/AIGenerator'
 import Settings       from './pages/admin/Settings'
+import SocialMedia    from './pages/admin/SocialMedia'
 import Categories     from './pages/admin/Categories'
 
 function ProtectedRoute({ children }) {
@@ -44,6 +45,7 @@ export default function App() {
           <Route path="ai" element={<AIGenerator />} />
           <Route path="categories" element={<Categories />} />
           <Route path="settings" element={<Settings />} />
+          <Route path="social"   element={<SocialMedia />} />
         </Route>
       </Routes>
     </AppProvider>

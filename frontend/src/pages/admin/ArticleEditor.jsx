@@ -54,6 +54,29 @@ export default function ArticleEditor() {
       theme: 'snow',
       placeholder: 'Start writing your article...',
       modules: {
+        clipboard: {
+          matchers: [
+            [Node.ELEMENT_NODE, (node, delta) => {
+              // Strip background-color and color from pasted content
+              delta.ops = delta.ops.map(op => {
+                if (op.attributes) {
+                  delete op.attributes.background
+                  delete op.attributes.color
+                  // Also strip inline style background
+                  if (op.attributes.style) {
+                    op.attributes.style = op.attributes.style
+                      .replace(/background(-color)?:[^;]+;?/gi, '')
+                      .replace(/color:[^;]+;?/gi, '')
+                      .trim()
+                    if (!op.attributes.style) delete op.attributes.style
+                  }
+                }
+                return op
+              })
+              return delta
+            }]
+          ]
+        },
         toolbar: [
           [{ header: [1, 2, 3, false] }],
           ['bold', 'italic', 'underline', 'strike'],

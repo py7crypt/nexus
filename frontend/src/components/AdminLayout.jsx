@@ -9,6 +9,7 @@ const NAV = [
   { to: '/admin/articles/new', label: 'New Article', icon: '✏️' },
   { to: '/admin/ai',        label: 'AI Generator', icon: '🤖', badge: 'AI' },
   { to: '/admin/categories',label: 'Categories',   icon: '🏷️' },
+  { to: '/admin/social',    label: 'Social Media', icon: '📱' },
   { to: '/admin/settings',  label: 'Settings',     icon: '⚙️' },
 ]
 
