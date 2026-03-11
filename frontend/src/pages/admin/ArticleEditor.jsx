@@ -170,6 +170,7 @@ export default function ArticleEditor() {
       title:           a.title           || f.title,
       slug:            slugify(a.title   || f.title),
       category:        a.category        || f.category,
+      author:          a.author          || f.author,
       excerpt:         a.excerpt         || f.excerpt,
       cover_image:     a.cover_image     || f.cover_image,
       seo_title:       a.seo_title       || f.seo_title       || (a.title||'').slice(0,60),
