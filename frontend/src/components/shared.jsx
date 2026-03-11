@@ -237,23 +237,32 @@ const WX_DESC = {
   80:'Showers',81:'Rain showers',82:'Violent showers',95:'Thunderstorm',96:'Thunderstorm',99:'Thunderstorm',
 }
 
-async function _fetchWeatherByCoords(lat, lon) {
-  const [geo, w] = await Promise.all([
-    fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`).then(r=>r.json()),
-    fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weathercode,windspeed_10m,relativehumidity_2m&temperature_unit=celsius&windspeed_unit=kmh&timezone=auto`).then(r=>r.json()),
-  ])
-  const city = geo.address?.city || geo.address?.town || geo.address?.village || geo.address?.county || ''
-  return { wx: w.current, city }
+async function _getCoordsByIP() {
+  // ipwho.is — free, CORS-enabled, no API key
+  const d = await fetch('https://ipwho.is/').then(r => r.json())
+  if (!d.success) throw new Error('IP lookup failed')
+  return { lat: d.latitude, lon: d.longitude, city: d.city || d.region || '' }
 }
 
-async function _fetchWeatherByIP() {
-  // ip-api.com: free, no key, returns lat/lon from IP
-  const ip = await fetch('https://ip-api.com/json/?fields=lat,lon,city').then(r=>r.json())
-  if (!ip.lat) throw new Error('IP geo failed')
-  const w = await fetch(
-    `https://api.open-meteo.com/v1/forecast?latitude=${ip.lat}&longitude=${ip.lon}&current=temperature_2m,weathercode,windspeed_10m,relativehumidity_2m&temperature_unit=celsius&windspeed_unit=kmh&timezone=auto`
-  ).then(r=>r.json())
-  return { wx: w.current, city: ip.city || '' }
+async function _fetchWeather(lat, lon) {
+  // Open-Meteo — free, no key. Field is "weather_code" (not "weathercode")
+  const url =
+    `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
+    `&current=temperature_2m,weather_code,windspeed_10m,relativehumidity_2m` +
+    `&temperature_unit=celsius&windspeed_unit=kmh&timezone=auto`
+  const d = await fetch(url).then(r => r.json())
+  if (!d.current) throw new Error('No weather data')
+  return d.current
+}
+
+async function _getCityFromCoords(lat, lon) {
+  try {
+    const d = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`,
+      { headers: { 'Accept-Language': 'en' } }
+    ).then(r => r.json())
+    return d.address?.city || d.address?.town || d.address?.village || d.address?.county || ''
+  } catch { return '' }
 }
 
 export function WeatherCard({ compact = false }) {
@@ -263,46 +272,52 @@ export function WeatherCard({ compact = false }) {
 
   useEffect(() => {
     let cancelled = false
-    const apply = ({ wx, city }) => {
-      if (cancelled) return
-      setWx(wx); setCity(city); setLoad(false)
+
+    async function loadWeather() {
+      try {
+        let lat, lon, cityName = ''
+
+        // Try browser geolocation with a 6s timeout
+        try {
+          const pos = await new Promise((res, rej) => {
+            const t = setTimeout(() => rej(new Error('timeout')), 6000)
+            navigator.geolocation.getCurrentPosition(
+              p  => { clearTimeout(t); res(p) },
+              () => { clearTimeout(t); rej(new Error('denied')) },
+              { timeout: 6000, maximumAge: 300000 }
+            )
+          })
+          lat      = pos.coords.latitude
+          lon      = pos.coords.longitude
+          cityName = await _getCityFromCoords(lat, lon)
+        } catch {
+          // Geolocation failed — fall back to IP
+          const ip = await _getCoordsByIP()
+          lat = ip.lat; lon = ip.lon; cityName = ip.city
+        }
+
+        const weather = await _fetchWeather(lat, lon)
+        if (!cancelled) { setWx(weather); setCity(cityName); setLoad(false) }
+      } catch {
+        if (!cancelled) setLoad(false)
+      }
     }
-    const fail = () => {
-      if (cancelled) return
-      // Fallback to IP-based location
-      _fetchWeatherByIP().then(apply).catch(() => { if (!cancelled) setLoad(false) })
-    }
 
-    if (!navigator.geolocation) { fail(); return }
-
-    // Race geolocation against a 5s timeout — whichever wins
-    let settled = false
-    const done = (result) => { if (!settled) { settled = true; apply(result) } }
-    const fallback = setTimeout(() => { if (!settled) { settled = true; fail() } }, 5000)
-
-    navigator.geolocation.getCurrentPosition(
-      async ({ coords }) => {
-        clearTimeout(fallback)
-        try { done(await _fetchWeatherByCoords(coords.latitude, coords.longitude)) }
-        catch { if (!settled) { settled = true; fail() } }
-      },
-      () => { clearTimeout(fallback); if (!settled) { settled = true; fail() } },
-      { timeout: 5000, maximumAge: 300000 }
-    )
-    return () => { cancelled = true; clearTimeout(fallback) }
+    if (navigator.geolocation || true) loadWeather()
+    return () => { cancelled = true }
   }, [])
 
   if (loading) return (
-    <div className={compact ? 'flex items-center gap-2 text-sm text-slate-400' : 'bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5'}>
+    <div className={compact ? 'flex items-center gap-2' : 'bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5'}>
       <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin flex-shrink-0"/>
-      {!compact && <span className="text-sm text-slate-400 ml-2">Loading weather...</span>}
+      {!compact && <span className="text-sm text-slate-400 ml-2 mt-0.5 inline-block">Loading weather...</span>}
     </div>
   )
   if (!wx) return null
 
-  const code  = wx.weathercode
-  const icon  = WX_CODES[code] || '🌡️'
-  const desc  = WX_DESC[code]  || 'Unknown'
+  const code = wx.weather_code ?? wx.weathercode ?? 0
+  const icon = WX_CODES[code] || '🌡️'
+  const desc = WX_DESC[code]  || ''
   const temp  = Math.round(wx.temperature_2m)
   const wind  = Math.round(wx.windspeed_10m)
   const humid = wx.relativehumidity_2m
@@ -312,7 +327,7 @@ export function WeatherCard({ compact = false }) {
       <span className="text-2xl">{icon}</span>
       <div>
         <span className="font-bold text-slate-800 dark:text-white">{temp}°C</span>
-        <span className="text-slate-500 dark:text-slate-400 ml-1">{city}</span>
+        {city && <span className="text-slate-500 dark:text-slate-400 ml-1">{city}</span>}
       </div>
     </div>
   )

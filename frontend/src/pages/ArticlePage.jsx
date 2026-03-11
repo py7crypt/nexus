@@ -55,14 +55,9 @@ export default function ArticlePage() {
   const articleUrl   = encodeURIComponent(window.location.href)
   const articleTitle = encodeURIComponent(a.title)
 
-  const ICON_MAP = { twitter:'𝕏', facebook:'f', instagram:'📸', linkedin:'in', youtube:'▶', tiktok:'♪' }
   const shareLinks = Array.isArray(social)
-    ? social.map(l => ({ icon: ICON_MAP[l.platform] || '🔗', label: l.label, url: l.url }))
-    : [
-        { icon: '𝕏',  label: 'Twitter',  url: social.twitter  || `https://twitter.com/intent/tweet?text=${articleTitle}&url=${articleUrl}` },
-        { icon: 'f',  label: 'Facebook', url: social.facebook  || `https://www.facebook.com/sharer/sharer.php?u=${articleUrl}` },
-        { icon: 'in', label: 'LinkedIn', url: social.linkedin  || `https://www.linkedin.com/sharing/share-offsite/?url=${articleUrl}` },
-      ]
+    ? social.map(l => ({ icon: l.icon || '', label: l.label, url: l.url }))
+    : []
 
   return (
     <div className="max-w-[1280px] mx-auto px-5 py-8">

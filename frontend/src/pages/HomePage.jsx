@@ -18,24 +18,24 @@ const PLACEHOLDER = [
 const WX_CODES = {0:'☀️',1:'🌤️',2:'⛅',3:'☁️',45:'🌫️',51:'🌦️',53:'🌦️',55:'🌧️',61:'🌧️',63:'🌧️',65:'🌧️',71:'🌨️',73:'🌨️',75:'❄️',80:'🌦️',81:'🌧️',82:'⛈️',95:'⛈️',99:'⛈️'}
 const WX_DESC = {0:'Clear sky',1:'Mainly clear',2:'Partly cloudy',3:'Overcast',45:'Foggy',51:'Drizzle',53:'Drizzle',55:'Heavy drizzle',61:'Light rain',63:'Rain',65:'Heavy rain',71:'Light snow',73:'Snow',75:'Heavy snow',80:'Showers',81:'Rain showers',82:'Violent showers',95:'Thunderstorm',99:'Thunderstorm'}
 
-async function _stripByCoords(lat, lon) {
-  const [geo, w] = await Promise.all([
-    fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`).then(r=>r.json()),
-    fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weathercode,windspeed_10m,relativehumidity_2m,apparent_temperature&temperature_unit=celsius&windspeed_unit=kmh&timezone=auto`).then(r=>r.json()),
-  ])
-  return {
-    wx:   w.current,
-    city: geo.address?.city || geo.address?.town || geo.address?.village || geo.address?.county || '',
-  }
+async function _getWxByCoords(lat, lon) {
+  const url =
+    `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
+    `&current=temperature_2m,weather_code,windspeed_10m,relativehumidity_2m,apparent_temperature` +
+    `&temperature_unit=celsius&windspeed_unit=kmh&timezone=auto`
+  const d = await fetch(url).then(r => r.json())
+  if (!d.current) throw new Error('no data')
+  return d.current
 }
 
-async function _stripByIP() {
-  const ip = await fetch('https://ip-api.com/json/?fields=lat,lon,city').then(r=>r.json())
-  if (!ip.lat) throw new Error('failed')
-  const w = await fetch(
-    `https://api.open-meteo.com/v1/forecast?latitude=${ip.lat}&longitude=${ip.lon}&current=temperature_2m,weathercode,windspeed_10m,relativehumidity_2m,apparent_temperature&temperature_unit=celsius&windspeed_unit=kmh&timezone=auto`
-  ).then(r=>r.json())
-  return { wx: w.current, city: ip.city || '' }
+async function _getCityName(lat, lon) {
+  try {
+    const d = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`,
+      { headers: { 'Accept-Language': 'en' } }
+    ).then(r => r.json())
+    return d.address?.city || d.address?.town || d.address?.village || d.address?.county || ''
+  } catch { return '' }
 }
 
 function WeatherStrip() {
@@ -45,36 +45,47 @@ function WeatherStrip() {
 
   useEffect(() => {
     let cancelled = false
-    const apply = ({ wx, city }) => {
-      if (cancelled) return
-      setWx(wx); setCity(city); setLoading(false)
+
+    async function load() {
+      try {
+        let lat, lon, cityName = ''
+
+        // Try geolocation first with 6s timeout
+        try {
+          const pos = await new Promise((res, rej) => {
+            const t = setTimeout(() => rej(new Error('timeout')), 6000)
+            navigator.geolocation.getCurrentPosition(
+              p  => { clearTimeout(t); res(p) },
+              () => { clearTimeout(t); rej(new Error('denied')) },
+              { timeout: 6000, maximumAge: 300000 }
+            )
+          })
+          lat = pos.coords.latitude
+          lon = pos.coords.longitude
+          cityName = await _getCityName(lat, lon)
+        } catch {
+          // Fall back to IP — ipwho.is supports CORS
+          const ip = await fetch('https://ipwho.is/').then(r => r.json())
+          if (!ip.success) throw new Error('IP failed')
+          lat = ip.latitude; lon = ip.longitude; cityName = ip.city || ip.region || ''
+        }
+
+        const weather = await _getWxByCoords(lat, lon)
+        if (!cancelled) { setWx(weather); setCity(cityName); setLoading(false) }
+      } catch {
+        if (!cancelled) setLoading(false)
+      }
     }
-    const fallbackToIP = () => {
-      _stripByIP().then(apply).catch(() => { if (!cancelled) setLoading(false) })
-    }
 
-    let settled = false
-    const done = (r) => { if (!settled) { settled = true; apply(r) } }
-    const timer = setTimeout(() => { if (!settled) { settled = true; fallbackToIP() } }, 5000)
-
-    if (!navigator.geolocation) { clearTimeout(timer); fallbackToIP(); return }
-
-    navigator.geolocation.getCurrentPosition(
-      async ({ coords }) => {
-        clearTimeout(timer)
-        try { done(await _stripByCoords(coords.latitude, coords.longitude)) }
-        catch { if (!settled) { settled = true; fallbackToIP() } }
-      },
-      () => { clearTimeout(timer); if (!settled) { settled = true; fallbackToIP() } },
-      { timeout: 5000, maximumAge: 300000 }
-    )
-    return () => { cancelled = true; clearTimeout(timer) }
+    load()
+    return () => { cancelled = true }
   }, [])
 
   if (loading || !wx) return null
 
-  const icon    = WX_CODES[wx.weathercode] || '🌡️'
-  const desc    = WX_DESC[wx.weathercode]  || ''
+  const code    = wx.weather_code ?? wx.weathercode ?? 0
+  const icon    = WX_CODES[code] || '🌡️'
+  const desc    = WX_DESC[code]  || ''
   const temp    = Math.round(wx.temperature_2m)
   const feels   = Math.round(wx.apparent_temperature)
   const wind    = Math.round(wx.windspeed_10m)
