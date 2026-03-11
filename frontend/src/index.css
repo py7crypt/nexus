@@ -1,0 +1,99 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --primary: #1E73FF;
+    --primary-dark: #1558cc;
+    --primary-light: #e8f0ff;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Poppins', sans-serif;
+    @apply bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100;
+    overflow-x: hidden;
+  }
+  a { text-decoration: none; }
+}
+
+@layer components {
+  .cat-tag {
+    @apply inline-block text-xs font-bold uppercase tracking-wide px-2.5 py-0.5 rounded-full text-white;
+  }
+  .cat-tech         { background: #1E73FF; }
+  .cat-science      { background: #7C3AED; }
+  .cat-business     { background: #059669; }
+  .cat-health       { background: #DC2626; }
+  .cat-lifestyle    { background: #D97706; }
+  .cat-travel       { background: #0891B2; }
+  .cat-entertainment{ background: #DB2777; }
+
+  .card-zoom { overflow: hidden; }
+  .card-zoom img { transition: transform 0.5s cubic-bezier(0.25,0.46,0.45,0.94); }
+  .card-zoom:hover img { transform: scale(1.06); }
+
+  .btn-primary {
+    @apply bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2.5 rounded-lg
+           transition-all duration-150 hover:-translate-y-0.5 inline-flex items-center gap-2;
+  }
+  .btn-outline {
+    @apply border-2 border-slate-200 dark:border-slate-700 hover:border-blue-500 hover:text-blue-600
+           font-semibold px-5 py-2 rounded-lg transition-all duration-150 inline-flex items-center gap-2;
+  }
+  .btn-danger {
+    @apply bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-2 rounded-lg transition-all inline-flex items-center gap-2;
+  }
+
+  .form-input {
+    @apply w-full px-4 py-2.5 border-2 border-slate-200 dark:border-slate-700
+           rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100
+           focus:outline-none focus:border-blue-500 transition-colors text-sm;
+  }
+  .form-select {
+    @apply w-full px-4 py-2.5 border-2 border-slate-200 dark:border-slate-700
+           rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100
+           focus:outline-none focus:border-blue-500 transition-colors text-sm cursor-pointer;
+  }
+  .form-label {
+    @apply block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5;
+  }
+
+  .sidebar-link {
+    @apply flex items-center gap-3 px-5 py-2.5 text-slate-400 hover:text-white
+           hover:bg-white/5 rounded-none border-l-2 border-transparent
+           transition-all duration-150 text-sm font-medium cursor-pointer;
+  }
+  .sidebar-link.active {
+    @apply text-white bg-blue-600/20 border-l-blue-500;
+  }
+
+  .article-card {
+    @apply bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700
+           shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-1 overflow-hidden flex flex-col;
+  }
+
+  .ticker-scroll {
+    animation: ticker 40s linear infinite;
+  }
+  @keyframes ticker {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  .fade-in { animation: fadeIn 0.5s ease both; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: none; }
+  }
+}
+
+/* Quill dark mode */
+.dark .ql-toolbar.ql-snow  { background: #1e293b; border-color: #334155; }
+.dark .ql-container.ql-snow{ background: #1e293b; border-color: #334155; color: #f1f5f9; }
+.dark .ql-toolbar.ql-snow .ql-stroke { stroke: #94a3b8; }
+.dark .ql-toolbar.ql-snow .ql-fill   { fill: #94a3b8; }
+.dark .ql-picker-label { color: #94a3b8; }
+.ql-container.ql-snow { min-height: 280px; font-family: 'Poppins', sans-serif; font-size: 15px; }

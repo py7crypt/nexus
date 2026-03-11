@@ -5,11 +5,11 @@
   "installCommand": "cd frontend && npm install",
   "framework": null,
   "functions": {
-    "articles.py":    { "runtime": "@vercel/python@3.0.7" },
-    "articles/[id].py": { "runtime": "@vercel/python@3.0.7" },
-    "ai-generate.py": { "runtime": "@vercel/python@3.0.7" },
-    "stats.py":       { "runtime": "@vercel/python@3.0.7" },
-    "auth.py":        { "runtime": "@vercel/python@3.0.7" }
+    "api/articles.py":    { "runtime": "@vercel/python@3.0.7" },
+    "api/articles/[id].py": { "runtime": "@vercel/python@3.0.7" },
+    "api/ai-generate.py": { "runtime": "@vercel/python@3.0.7" },
+    "api/stats.py":       { "runtime": "@vercel/python@3.0.7" },
+    "api/auth.py":        { "runtime": "@vercel/python@3.0.7" }
   },
   "rewrites": [
     { "source": "/api/articles/(.*)", "destination": "/api/articles/[id]" },
