@@ -5,7 +5,10 @@
   "installCommand": "cd frontend && npm install",
   "framework": null,
   "rewrites": [
-    { "source": "/api/articles/(.+)", "destination": "/api/articles/[id]" }
+    {
+      "source": "/api/articles/:id",
+      "destination": "/api/articles/[id]?id=:id"
+    }
   ],
   "headers": [
     {

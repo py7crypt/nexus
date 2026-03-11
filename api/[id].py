@@ -3,7 +3,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from _utils import verify_token, get_all_articles, kv_get, kv_set, kv_del, kv_lrem, ARTICLE_FIELDS, _parse_article
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler
-from urllib.parse import urlparse
+from urllib.parse import urlparse, parse_qs
 
 def _run(c):
     loop = asyncio.new_event_loop()
@@ -12,26 +12,33 @@ def _run(c):
     return r
 
 def _get_id(path):
-    """Extract article ID from path, stripping query string."""
+    """
+    Extract article ID — first from ?id= query param (set by vercel.json rewrite),
+    then fall back to last path segment.
+    """
+    qs = parse_qs(urlparse(path).query)
+    if qs.get("id"):
+        return qs["id"][0]
     return urlparse(path).path.rstrip("/").split("/")[-1]
 
 def _load_article(article_id):
-    """Load article by UUID key, then fall back to full scan by id/slug."""
-    # Direct key lookup (fast path)
+    # Strip any accidental JSON wrapping from old corrupt IDs
+    if article_id.startswith("{"):
+        try:
+            article_id = json.loads(article_id).get("value", article_id)
+        except Exception:
+            pass
+
     raw = _run(kv_get(f"article:{article_id}"))
     a = _parse_article(raw)
     if a:
         return a
 
-    print(f"[id.py] Direct key miss for {article_id!r}, scanning all articles...")
-
-    # Full scan fallback — catches slug lookups and any key mismatches
+    # Fallback: full scan (handles slug lookups)
     arts, _ = _run(get_all_articles(status="all", limit=5000))
     for art in arts:
         if art.get("id") == article_id or art.get("slug") == article_id:
             return art
-
-    print(f"[id.py] Article {article_id!r} not found in scan either.")
     return None
 
 class handler(BaseHTTPRequestHandler):
@@ -55,11 +62,7 @@ class handler(BaseHTTPRequestHandler):
         article_id = _get_id(self.path)
         a = _load_article(article_id)
         if not a:
-            return self._json(404, {
-                "success": False,
-                "error": f"Article not found",
-                "id": article_id,
-            })
+            return self._json(404, {"success": False, "error": "Article not found", "id": article_id})
         a["views"] = a.get("views", 0) + 1
         _run(kv_set(f"article:{a['id']}", a))
         self._json(200, {"success": True, "article": a})
