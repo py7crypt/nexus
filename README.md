@@ -1,4 +1,4 @@
-# NEXUS Fullstack — React + Python (FastAPI) on Vercel
+#  NEXUS — React + Python (FastAPI) on Vercel
 
 A complete fullstack magazine platform:
 - **Frontend**: React 18 + Vite + Tailwind CSS + React Router + React Query
