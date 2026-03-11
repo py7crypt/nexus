@@ -36,7 +36,9 @@ export default function ArticleEditor() {
     queryKey: ['article', id],
     queryFn:  () => fetchArticle(id),
     enabled:  isEdit,
-    staleTime: Infinity,  // don't refetch mid-edit
+    staleTime: Infinity,   // don't refetch mid-edit
+    retry: 3,              // retry on 404 in case KV write is still settling
+    retryDelay: 800,
   })
 
   // ── Mount Quill exactly once ───────────────────────────────────────────
@@ -73,6 +75,8 @@ export default function ArticleEditor() {
   useEffect(() => {
     if (!editorReady || !existing?.article || loadedRef.current) return
     loadedRef.current = true
+    // Small delay to ensure Quill DOM is fully settled after mount
+    const doLoad = () => {
     const a = existing.article
 
     setForm({
@@ -96,6 +100,9 @@ export default function ArticleEditor() {
       setContent(a.content)
       setWords(wordCount(a.content))
     }
+    }
+    // Small timeout ensures Quill editor DOM is fully ready
+    setTimeout(doLoad, 100)
   }, [editorReady, existing])
 
   // ── Handle AI draft from sessionStorage ───────────────────────────────
@@ -168,8 +175,14 @@ export default function ArticleEditor() {
       if (res.success) {
         toast(isEdit ? '✅ Article updated!' : '🎉 Article created!', 'success')
         qc.invalidateQueries(['admin-articles-all'])
-        qc.invalidateQueries(['article', id])
-        if (!isEdit) navigate(`/admin/articles/edit/${res.article.id}`)
+        if (isEdit) {
+          // Refetch the article so editor reloads with saved data
+          qc.invalidateQueries(['article', id])
+        } else {
+          // Small delay so KV write settles before we navigate + fetch
+          await new Promise(r => setTimeout(r, 600))
+          navigate(`/admin/articles/edit/${res.article.id}`)
+        }
       } else {
         toast(`Error: ${res.error || 'Unknown error'}`, 'error')
       }
