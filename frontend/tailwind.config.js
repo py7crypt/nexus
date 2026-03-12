@@ -5,11 +5,24 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        display: ['"Syne"', 'sans-serif'],
-        body:    ['"DM Sans"', 'sans-serif'],
+        display: ['"Playfair Display"', 'Georgia', 'serif'],
+        body:    ['Poppins', 'sans-serif'],
       },
       colors: {
-        primary: { DEFAULT: '#3b82f6', dark: '#2563eb', light: '#eff6ff' },
+        primary: {
+          DEFAULT: '#1E73FF',
+          dark:    '#1558cc',
+          light:   '#e8f0ff',
+        },
+        cat: {
+          tech:          '#1E73FF',
+          science:       '#7C3AED',
+          business:      '#059669',
+          health:        '#DC2626',
+          lifestyle:     '#D97706',
+          travel:        '#0891B2',
+          entertainment: '#DB2777',
+        },
       },
     },
   },

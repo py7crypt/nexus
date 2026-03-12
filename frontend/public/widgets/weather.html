@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Weather</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(135deg, #0c2a6b 0%, #1E73FF 100%);
+    color: #fff;
+    height: 200px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+  #widget {
+    width: 100%;
+    padding: 0.9rem 1rem;
+    display: none;
+  }
+
+  #loading {
+    text-align: center;
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.6);
+  }
+
+  #error {
+    text-align: center;
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.55);
+    display: none;
+    padding: 1rem;
+  }
+
+  .top-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+  }
+
+  .temp-block { display: flex; align-items: center; gap: 0.6rem; }
+  .wx-icon { font-size: 2.4rem; line-height: 1; }
+  .temp { font-size: 2rem; font-weight: 700; line-height: 1; }
+  .desc { font-size: 0.7rem; color: rgba(255,255,255,0.65); margin-top: 0.15rem; }
+
+  .location { text-align: right; }
+  .city { font-size: 0.82rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px; }
+  .datetime { font-size: 0.65rem; color: rgba(255,255,255,0.55); margin-top: 0.2rem; }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.4rem;
+    border-top: 1px solid rgba(255,255,255,0.15);
+    padding-top: 0.6rem;
+    margin-top: 0.4rem;
+  }
+
+  .stat {
+    text-align: center;
+    background: rgba(255,255,255,0.1);
+    border-radius: 8px;
+    padding: 0.35rem 0.25rem;
+  }
+  .stat-label { font-size: 0.58rem; color: rgba(255,255,255,0.55); text-transform: uppercase; letter-spacing: 0.04em; }
+  .stat-val { font-size: 0.78rem; font-weight: 700; margin-top: 0.1rem; }
+</style>
+</head>
+<body>
+
+<div id="loading">📡 Detecting location…</div>
+<div id="error">⚠️ Unable to load weather.<br/>Check location permissions.</div>
+
+<div id="widget">
+  <div class="top-row">
+    <div class="temp-block">
+      <div class="wx-icon" id="wx-icon">☀️</div>
+      <div>
+        <div class="temp"><span id="temp">--</span>°</div>
+        <div class="desc" id="desc">--</div>
+      </div>
+    </div>
+    <div class="location">
+      <div class="city" id="city">--</div>
+      <div class="datetime" id="datetime">--</div>
+    </div>
+  </div>
+  <div class="stats">
+    <div class="stat"><div class="stat-label">Feels</div><div class="stat-val" id="feels">--</div></div>
+    <div class="stat"><div class="stat-label">Wind</div><div class="stat-val" id="wind">--</div></div>
+    <div class="stat"><div class="stat-label">Humid</div><div class="stat-val" id="humid">--</div></div>
+    <div class="stat"><div class="stat-label">UV</div><div class="stat-val" id="uv">--</div></div>
+  </div>
+</div>
+
+<script>
+const WX_ICON = {0:'☀️',1:'🌤️',2:'⛅',3:'☁️',45:'🌫️',48:'🌫️',51:'🌦️',53:'🌦️',55:'🌧️',61:'🌧️',63:'🌧️',65:'🌧️',71:'🌨️',73:'🌨️',75:'❄️',77:'🌨️',80:'🌦️',81:'🌧️',82:'⛈️',85:'🌨️',86:'❄️',95:'⛈️',96:'⛈️',99:'⛈️'};
+const WX_DESC = {0:'Clear sky',1:'Mainly clear',2:'Partly cloudy',3:'Overcast',45:'Foggy',51:'Light drizzle',53:'Drizzle',55:'Heavy drizzle',61:'Light rain',63:'Rain',65:'Heavy rain',71:'Light snow',73:'Snow',75:'Heavy snow',80:'Showers',81:'Rain showers',82:'Violent showers',95:'Thunderstorm',99:'Thunderstorm'};
+
+async function load() {
+  try {
+    // 1. Geolocation
+    const pos = await new Promise((res, rej) => {
+      const t = setTimeout(() => rej(), 6000);
+      navigator.geolocation.getCurrentPosition(p => { clearTimeout(t); res(p); }, () => { clearTimeout(t); rej(); }, { timeout: 6000, maximumAge: 300000 });
+    }).catch(async () => {
+      // 2. IP fallback
+      const d = await fetch('https://ipapi.co/json/').then(r => r.json());
+      if (!d.latitude) throw new Error();
+      return { coords: { latitude: d.latitude, longitude: d.longitude }, _city: d.city || '' };
+    });
+
+    const lat = pos.coords.latitude;
+    const lon = pos.coords.longitude;
+    const ipCity = pos._city || '';
+
+    const [wx, geo] = await Promise.all([
+      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature,weather_code,windspeed_10m,relativehumidity_2m,uv_index&timezone=auto`).then(r => r.json()),
+      ipCity ? Promise.resolve(null) :
+        fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`, { headers: { 'Accept-Language': 'en' } }).then(r => r.json()).catch(() => null),
+    ]);
+
+    const c = wx.current;
+    const code = c.weather_code ?? 0;
+    const city = ipCity || (geo && (geo.address?.city || geo.address?.town || geo.address?.village)) || 'Your Location';
+    const now = new Date();
+
+    document.getElementById('wx-icon').textContent = WX_ICON[code] || '🌡️';
+    document.getElementById('temp').textContent = Math.round(c.temperature_2m);
+    document.getElementById('desc').textContent = WX_DESC[code] || '';
+    document.getElementById('city').textContent = '📍 ' + city;
+    document.getElementById('datetime').textContent =
+      now.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' }) + ' · ' +
+      now.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+    document.getElementById('feels').textContent = Math.round(c.apparent_temperature) + '°';
+    document.getElementById('wind').textContent = Math.round(c.windspeed_10m) + 'km/h';
+    document.getElementById('humid').textContent = c.relativehumidity_2m + '%';
+    document.getElementById('uv').textContent = Math.round(c.uv_index ?? 0);
+
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('widget').style.display = 'block';
+  } catch {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('error').style.display = 'block';
+  }
+}
+
+load();
+</script>
+</body>
+</html>

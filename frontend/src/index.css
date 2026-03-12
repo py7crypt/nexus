@@ -1,614 +1,356 @@
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,700&family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* ── CSS Variables ─────────────────────────────────────────────────────────── */
+/* ─── CSS Variables ────────────────────────────────────────────────────────── */
 :root {
-  --bg-base:        #0a0f1e;
+  /* dark (default — navy magazine) */
+  --bg-base:        #0b1120;
   --bg-surface:     #111827;
   --bg-elevated:    #1a2235;
-  --bg-card:        #141c2e;
+  --bg-card:        #131d30;
   --border:         rgba(255,255,255,0.07);
-  --border-hover:   rgba(59,130,246,0.5);
+  --border-hover:   rgba(30,115,255,0.5);
   --text-primary:   #f1f5f9;
   --text-secondary: #94a3b8;
   --text-muted:     #475569;
-  --accent:         #3b82f6;
-  --accent-hover:   #2563eb;
-  --accent-glow:    rgba(59,130,246,0.15);
-  --font-display:   'Syne', sans-serif;
-  --font-body:      'DM Sans', sans-serif;
-  --radius-card:    14px;
-  --shadow-card:    0 4px 24px rgba(0,0,0,0.4);
-  --shadow-hover:   0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px rgba(59,130,246,0.2);
+  --accent:         #1E73FF;
+  --accent-hover:   #1558cc;
+  --accent-glow:    rgba(30,115,255,0.15);
+  --font-display:   'Playfair Display', Georgia, serif;
+  --font-body:      'Poppins', sans-serif;
+  --radius-card:    12px;
+  --shadow-card:    0 4px 20px rgba(0,0,0,0.45);
+  --shadow-hover:   0 8px 32px rgba(0,0,0,0.65), 0 0 0 1px rgba(30,115,255,0.25);
 }
 
-/* Light mode overrides */
-.light, html:not(.dark) {
+/* light mode */
+html:not(.dark) {
   --bg-base:        #f0f4f8;
   --bg-surface:     #ffffff;
   --bg-elevated:    #f8fafc;
   --bg-card:        #ffffff;
   --border:         rgba(0,0,0,0.08);
-  --border-hover:   rgba(59,130,246,0.4);
+  --border-hover:   rgba(30,115,255,0.35);
   --text-primary:   #0f172a;
   --text-secondary: #475569;
   --text-muted:     #94a3b8;
-  --accent-glow:    rgba(59,130,246,0.08);
-  --shadow-card:    0 2px 12px rgba(0,0,0,0.08);
-  --shadow-hover:   0 8px 28px rgba(0,0,0,0.12), 0 0 0 1px rgba(59,130,246,0.2);
+  --accent-glow:    rgba(30,115,255,0.08);
+  --shadow-card:    0 2px 10px rgba(0,0,0,0.07);
+  --shadow-hover:   0 6px 24px rgba(0,0,0,0.12), 0 0 0 1px rgba(30,115,255,0.2);
 }
 
-/* ── Base ──────────────────────────────────────────────────────────────────── */
+/* ─── Base ─────────────────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
 html { scroll-behavior: smooth; }
-
 body {
   font-family: var(--font-body);
   background: var(--bg-base);
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
+  overflow-x: hidden;
 }
+a { text-decoration: none; }
+h1,h2,h3,h4,h5,h6 { font-family: var(--font-display); line-height: 1.25; }
 
-/* ── Typography ────────────────────────────────────────────────────────────── */
-h1, h2, h3, h4, h5, h6 { font-family: var(--font-display); line-height: 1.2; }
-
-/* ── Scrollbar ─────────────────────────────────────────────────────────────── */
-::-webkit-scrollbar { width: 6px; height: 6px; }
+/* ─── Scrollbar ────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: var(--bg-base); }
 ::-webkit-scrollbar-thumb { background: var(--bg-elevated); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 .scrollbar-none::-webkit-scrollbar { display: none; }
 .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
 
-/* ── NEXUS Layout ──────────────────────────────────────────────────────────── */
-.nexus-container {
-  max-width: 1320px;
-  margin: 0 auto;
-  padding: 0 1.25rem;
-}
-
+/* ─── Layout ───────────────────────────────────────────────────────────────── */
+.nexus-container { max-width: 1300px; margin: 0 auto; padding: 0 1.25rem; }
 .nexus-home { background: var(--bg-base); min-height: 100vh; }
 
-/* ── Header ────────────────────────────────────────────────────────────────── */
+/* ─── Header ───────────────────────────────────────────────────────────────── */
 .nexus-header {
-  background: rgba(10, 15, 30, 0.95);
+  background: rgba(11,17,32,0.96);
   border-bottom: 1px solid var(--border);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
 }
-
-.light .nexus-header {
-  background: rgba(255,255,255,0.97);
-}
+html:not(.dark) .nexus-header { background: rgba(255,255,255,0.97); }
 
 .nexus-logo {
   font-family: var(--font-display);
-  font-size: 1.5rem;
-  font-weight: 800;
+  font-size: 1.6rem;
+  font-weight: 900;
   letter-spacing: -0.02em;
   color: var(--text-primary);
   text-decoration: none;
+  font-style: italic;
 }
-.nexus-logo span { color: var(--accent); }
+.nexus-logo span { color: var(--accent); font-style: normal; }
 
 .nexus-nav-link {
-  font-family: var(--font-display);
-  font-size: 0.8rem;
+  font-family: var(--font-body);
+  font-size: 0.78rem;
   font-weight: 600;
-  padding: 0.4rem 0.75rem;
-  border-radius: 8px;
+  padding: 0.35rem 0.7rem;
+  border-radius: 7px;
   color: var(--text-secondary);
   text-decoration: none;
-  transition: all 0.15s ease;
+  transition: all 0.15s;
   white-space: nowrap;
 }
-.nexus-nav-link:hover, .nexus-nav-link.active {
-  color: white;
-  background: var(--accent-glow);
-}
-.nexus-nav-link.active { color: var(--accent); }
+.nexus-nav-link:hover { color: var(--text-primary); background: var(--accent-glow); }
+.nexus-nav-link.active { color: var(--accent); background: var(--accent-glow); }
 
 .nexus-icon-btn {
   display: flex; align-items: center; justify-content: center;
-  width: 36px; height: 36px;
-  border-radius: 10px;
+  width: 34px; height: 34px; border-radius: 9px;
   border: 1px solid var(--border);
-  background: transparent;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.15s ease;
+  background: transparent; color: var(--text-secondary);
+  cursor: pointer; transition: all 0.15s;
 }
-.nexus-icon-btn:hover {
-  background: var(--accent-glow);
-  border-color: var(--accent);
-  color: var(--accent);
-}
+.nexus-icon-btn:hover { background: var(--accent-glow); border-color: var(--accent); color: var(--accent); }
 
 .nexus-mobile-menu {
-  background: var(--bg-surface);
-  border-top: 1px solid var(--border);
-  padding: 0.75rem 1.25rem;
-  display: flex; flex-direction: column; gap: 2px;
+  background: var(--bg-surface); border-top: 1px solid var(--border);
+  padding: 0.75rem 1.25rem; display: flex; flex-direction: column; gap: 2px;
 }
 .nexus-mobile-link {
-  padding: 0.625rem 0.75rem;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  text-decoration: none;
-  border-radius: 8px;
-  transition: all 0.15s ease;
+  padding: 0.6rem 0.75rem; font-size: 0.875rem; font-weight: 600;
+  color: var(--text-secondary); text-decoration: none; border-radius: 8px; transition: all 0.15s;
 }
-.nexus-mobile-link:hover { color: white; background: var(--accent-glow); }
+.nexus-mobile-link:hover { color: var(--text-primary); background: var(--accent-glow); }
 
-.nexus-search-bar {
-  background: var(--bg-surface);
-  border-top: 1px solid var(--border);
+.nexus-search-bar { background: var(--bg-surface); border-top: 1px solid var(--border); }
+
+/* ─── Buttons ──────────────────────────────────────────────────────────────── */
+.btn-primary, .nexus-btn-primary {
+  background: var(--accent); color: white;
+  font-family: var(--font-body); font-weight: 700;
+  padding: 0.55rem 1.2rem; border-radius: 9px; border: none;
+  cursor: pointer; transition: all 0.15s; font-size: 0.875rem;
+  display: inline-flex; align-items: center; justify-content: center; text-decoration: none;
 }
-
-.nexus-btn-primary {
-  background: var(--accent);
-  color: white;
-  font-family: var(--font-display);
-  font-weight: 700;
-  padding: 0.5rem 1.25rem;
-  border-radius: 10px;
-  border: none;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  font-size: 0.875rem;
+.btn-primary:hover, .nexus-btn-primary:hover {
+  background: var(--accent-hover); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(30,115,255,0.4);
 }
-.nexus-btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); }
+.btn-primary:disabled, .nexus-btn-primary:disabled { opacity: 0.55; cursor: not-allowed; transform: none; box-shadow: none; }
 
-/* ── Ticker ────────────────────────────────────────────────────────────────── */
+.btn-outline {
+  background: transparent; color: var(--text-secondary);
+  font-family: var(--font-body); font-weight: 600;
+  padding: 0.55rem 1.2rem; border-radius: 9px; border: 1px solid var(--border);
+  cursor: pointer; transition: all 0.15s; font-size: 0.875rem;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.btn-outline:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
+.btn-outline:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* ─── Ticker ───────────────────────────────────────────────────────────────── */
 .nexus-ticker {
-  display: flex;
-  align-items: center;
-  height: 36px;
-  overflow: hidden;
+  display: flex; align-items: center; height: 35px; overflow: hidden;
   background: var(--accent);
 }
 .nexus-ticker-label {
-  background: rgba(0,0,0,0.25);
-  padding: 0 1rem;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  font-family: var(--font-display);
-  font-size: 0.65rem;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  color: white;
-  flex-shrink: 0;
+  background: rgba(0,0,0,0.22); padding: 0 1rem; height: 100%;
+  display: flex; align-items: center;
+  font-family: var(--font-body); font-size: 0.62rem; font-weight: 800;
+  letter-spacing: 0.14em; color: white; flex-shrink: 0;
   border-right: 1px solid rgba(255,255,255,0.2);
 }
-
 @keyframes ticker {
   0%   { transform: translateX(0); }
   100% { transform: translateX(-50%); }
 }
-.ticker-scroll {
-  animation: ticker 35s linear infinite;
-  color: rgba(255,255,255,0.9);
-}
+.ticker-scroll { animation: ticker 38s linear infinite; color: rgba(255,255,255,0.92); }
 .ticker-scroll:hover { animation-play-state: paused; }
 
-/* ── Cards ─────────────────────────────────────────────────────────────────── */
+/* ─── Cards ────────────────────────────────────────────────────────────────── */
 .nexus-hero-card {
-  background: var(--bg-card);
-  border-radius: var(--radius-card);
-  overflow: hidden;
-  box-shadow: var(--shadow-card);
-  min-height: 380px;
-  transition: box-shadow 0.3s ease;
+  background: var(--bg-card); border-radius: var(--radius-card);
+  overflow: hidden; box-shadow: var(--shadow-card); min-height: 400px;
+  transition: box-shadow 0.3s;
 }
 .nexus-hero-card:hover { box-shadow: var(--shadow-hover); }
-
 .nexus-hero-overlay {
-  background: linear-gradient(
-    to top,
-    rgba(0,0,0,0.95) 0%,
-    rgba(0,0,0,0.6) 40%,
-    rgba(0,0,0,0.1) 70%,
-    transparent 100%
-  );
+  background: linear-gradient(to top, rgba(0,0,0,0.94) 0%, rgba(0,0,0,0.55) 40%, rgba(0,0,0,0.05) 75%, transparent 100%);
 }
-
-.nexus-mini-hero {
-  height: 140px;
-  background: var(--bg-card);
-}
+.nexus-mini-hero { height: 150px; background: var(--bg-card); overflow: hidden; }
 
 .nexus-grid-card {
-  background: var(--bg-card);
-  border-radius: var(--radius-card);
-  border: 1px solid var(--border);
-  overflow: hidden;
-  box-shadow: var(--shadow-card);
-  transition: all 0.25s ease;
+  background: var(--bg-card); border-radius: var(--radius-card);
+  border: 1px solid var(--border); overflow: hidden;
+  box-shadow: var(--shadow-card); transition: all 0.25s;
+  display: flex; flex-direction: column;
 }
-.nexus-grid-card:hover {
-  box-shadow: var(--shadow-hover);
-  border-color: var(--border-hover);
-  transform: translateY(-2px);
-}
-.nexus-grid-card-large .nexus-grid-card { }
+.nexus-grid-card:hover { box-shadow: var(--shadow-hover); border-color: var(--border-hover); transform: translateY(-2px); }
 
 .nexus-trending-card {
-  background: var(--bg-card);
-  border-radius: var(--radius-card);
-  border: 1px solid var(--border);
-  overflow: hidden;
-  transition: all 0.2s ease;
+  background: var(--bg-card); border-radius: var(--radius-card);
+  border: 1px solid var(--border); overflow: hidden; transition: all 0.2s; position: relative;
 }
-.nexus-trending-card:hover {
-  transform: translateY(-2px);
-  border-color: var(--border-hover);
-  box-shadow: var(--shadow-hover);
-}
+.nexus-trending-card:hover { transform: translateY(-2px); border-color: var(--border-hover); box-shadow: var(--shadow-hover); }
 
-/* ── Secondary list card ───────────────────────────────────────────────────── */
-.nexus-secondary-card {
-  text-decoration: none;
-  transition: all 0.15s ease;
-  border-radius: 10px;
-  padding: 0.25rem;
-}
+.nexus-secondary-card { text-decoration: none; transition: all 0.15s; border-radius: 9px; padding: 0.25rem; }
 .nexus-secondary-card:hover { background: var(--accent-glow); }
 
-/* ── Sidebar ───────────────────────────────────────────────────────────────── */
+/* ─── Sidebar ──────────────────────────────────────────────────────────────── */
 .nexus-sidebar-card {
-  background: var(--bg-card);
-  border-radius: var(--radius-card);
-  border: 1px solid var(--border);
-  overflow: hidden;
+  background: var(--bg-card); border-radius: var(--radius-card); border: 1px solid var(--border); overflow: hidden;
 }
 .nexus-sidebar-header {
-  font-family: var(--font-display);
-  font-size: 0.7rem;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-secondary);
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  align-items: center;
+  font-family: var(--font-body); font-size: 0.65rem; font-weight: 800;
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-secondary);
+  padding: 0.7rem 1rem; border-bottom: 1px solid var(--border); display: flex; align-items: center;
 }
 
-/* ── Weather widget ────────────────────────────────────────────────────────── */
+/* ─── Weather widget (sidebar) ─────────────────────────────────────────────── */
 .nexus-weather-widget {
-  background: linear-gradient(135deg, #1e3a6e 0%, #1e40af 50%, #1d4ed8 100%);
-  border-radius: var(--radius-card);
-  padding: 1.25rem;
-  border: 1px solid rgba(59,130,246,0.3);
-  box-shadow: 0 4px 20px rgba(29,78,216,0.3);
+  background: linear-gradient(135deg, #0c2a6b 0%, #1E73FF 100%);
+  border-radius: var(--radius-card); padding: 1.1rem;
+  border: 1px solid rgba(30,115,255,0.35); box-shadow: 0 4px 18px rgba(30,115,255,0.25);
 }
 
-/* ── Trending items in sidebar ─────────────────────────────────────────────── */
+/* ─── Trending items in sidebar ────────────────────────────────────────────── */
 .nexus-trending-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  padding: 0.625rem 0;
-  text-decoration: none;
-  transition: all 0.15s ease;
-  border-radius: 8px;
+  display: flex; align-items: flex-start; gap: 0.7rem;
+  padding: 0.6rem 0; text-decoration: none; transition: all 0.15s; border-radius: 8px;
 }
 .nexus-trending-item:hover { background: var(--accent-glow); padding-left: 0.5rem; }
 .nexus-trending-rank {
-  font-family: var(--font-display);
-  font-size: 1.25rem;
-  font-weight: 800;
-  color: var(--border);
-  line-height: 1;
-  flex-shrink: 0;
-  width: 28px;
+  font-family: var(--font-display); font-size: 1.3rem; font-weight: 900;
+  color: var(--border); line-height: 1; flex-shrink: 0; width: 28px;
 }
 
-/* ── Category section ──────────────────────────────────────────────────────── */
+/* ─── Category section ─────────────────────────────────────────────────────── */
 .nexus-category-section {
-  margin-bottom: 2rem;
-  background: var(--bg-card);
-  border-radius: var(--radius-card);
-  border: 1px solid var(--border);
-  overflow: hidden;
+  margin-bottom: 2rem; background: var(--bg-card);
+  border-radius: var(--radius-card); border: 1px solid var(--border); overflow: hidden;
 }
+.nexus-category-section > .nexus-section-header + div { padding: 0.75rem; }
+.nexus-category-section .nexus-grid-card { border: none; border-radius: 8px; }
 
 .nexus-section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.875rem 1rem;
-  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.8rem 1rem; border-bottom: 1px solid var(--border);
 }
-
 .nexus-section-title {
-  font-family: var(--font-display);
-  font-size: 1rem;
-  font-weight: 800;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  font-family: var(--font-display); font-size: 1rem; font-weight: 800;
+  display: flex; align-items: center; gap: 0.5rem;
 }
-
 .nexus-section-accent {
-  display: inline-block;
-  width: 3px;
-  height: 18px;
-  border-radius: 2px;
-  background: var(--accent);
-  flex-shrink: 0;
+  display: inline-block; width: 3px; height: 18px;
+  border-radius: 2px; background: var(--accent); flex-shrink: 0;
 }
-
-.nexus-category-section .nexus-section-header + div {
-  padding: 0.75rem;
-}
-
-.nexus-category-section .nexus-grid-card {
-  border: none;
-  border-radius: 10px;
-}
-
-.nexus-view-all {
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--accent);
-  text-decoration: none;
-  transition: all 0.15s ease;
-}
+.nexus-view-all { font-size: 0.72rem; font-weight: 700; color: var(--accent); text-decoration: none; transition: all 0.15s; }
 .nexus-view-all:hover { color: white; }
 
-/* ── Tags ──────────────────────────────────────────────────────────────────── */
+/* ─── Badges & tags ────────────────────────────────────────────────────────── */
 .nexus-cat-badge {
-  font-family: var(--font-display);
-  font-size: 0.6rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: white;
-  padding: 0.2rem 0.6rem;
-  border-radius: 20px;
-  display: inline-block;
+  font-family: var(--font-body); font-size: 0.58rem; font-weight: 800;
+  letter-spacing: 0.07em; text-transform: uppercase; color: white;
+  padding: 0.18rem 0.55rem; border-radius: 20px; display: inline-block;
 }
-
 .nexus-cat-pill {
-  font-size: 0.7rem;
-  font-weight: 700;
-  padding: 0.3rem 0.7rem;
-  border-radius: 20px;
-  border: 1px solid var(--border);
-  color: var(--cat-color, var(--accent));
-  background: transparent;
-  text-decoration: none;
-  transition: all 0.15s ease;
+  font-size: 0.68rem; font-weight: 700; padding: 0.28rem 0.65rem; border-radius: 20px;
+  border: 1px solid var(--border); color: var(--cat-color, var(--accent));
+  background: transparent; text-decoration: none; transition: all 0.15s;
 }
-.nexus-cat-pill:hover {
-  background: var(--cat-color, var(--accent));
-  color: white;
-  border-color: transparent;
-}
-
+.nexus-cat-pill:hover { background: var(--cat-color, var(--accent)); color: white; border-color: transparent; }
 .nexus-tag {
-  font-size: 0.65rem;
-  font-weight: 600;
-  padding: 0.25rem 0.6rem;
-  border-radius: 6px;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.15s ease;
+  font-size: 0.65rem; font-weight: 600; padding: 0.22rem 0.55rem; border-radius: 6px;
+  background: var(--bg-elevated); border: 1px solid var(--border); color: var(--text-secondary);
+  cursor: pointer; transition: all 0.15s;
 }
 .nexus-tag:hover { background: var(--accent-glow); border-color: var(--border-hover); color: var(--accent); }
 
-/* ── Newsletter card ───────────────────────────────────────────────────────── */
+/* ─── Newsletter ───────────────────────────────────────────────────────────── */
 .nexus-newsletter-card {
-  background: linear-gradient(135deg, #1e3a6e 0%, #312e81 100%);
-  border-radius: var(--radius-card);
-  padding: 1.5rem;
-  border: 1px solid rgba(99,102,241,0.3);
+  background: linear-gradient(135deg, #0c2a6b 0%, #1e3a8a 100%);
+  border-radius: var(--radius-card); padding: 1.4rem;
+  border: 1px solid rgba(30,115,255,0.3);
 }
 
-/* ── Image placeholder ─────────────────────────────────────────────────────── */
-.nexus-img-placeholder {
-  background: linear-gradient(135deg, var(--bg-elevated), var(--bg-surface));
-}
+/* ─── Misc ─────────────────────────────────────────────────────────────────── */
+.nexus-img-placeholder { background: linear-gradient(135deg, var(--bg-elevated), var(--bg-surface)); }
 
-/* ── Footer ────────────────────────────────────────────────────────────────── */
-.nexus-footer {
-  background: #070c18;
-  border-top: 1px solid var(--border);
-  margin-top: 4rem;
-}
+/* ─── Footer ───────────────────────────────────────────────────────────────── */
+.nexus-footer { background: #060d1a; border-top: 1px solid var(--border); margin-top: 4rem; }
+html:not(.dark) .nexus-footer { background: #e2e8f0; }
 .nexus-footer-heading {
-  font-family: var(--font-display);
-  font-size: 0.65rem;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-secondary);
-  margin-bottom: 1rem;
+  font-family: var(--font-body); font-size: 0.62rem; font-weight: 800;
+  letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 1rem;
 }
 
-/* ── Article page ──────────────────────────────────────────────────────────── */
+/* ─── Article card (shared.jsx) ────────────────────────────────────────────── */
 .article-card {
-  background: var(--bg-card);
-  border-radius: var(--radius-card);
-  border: 1px solid var(--border);
-  overflow: hidden;
-  display: flex; flex-direction: column;
-  box-shadow: var(--shadow-card);
-  transition: all 0.25s ease;
+  background: var(--bg-card); border-radius: var(--radius-card);
+  border: 1px solid var(--border); overflow: hidden;
+  display: flex; flex-direction: column; box-shadow: var(--shadow-card); transition: all 0.25s;
 }
-.article-card:hover {
-  box-shadow: var(--shadow-hover);
-  border-color: var(--border-hover);
-  transform: translateY(-2px);
-}
-.article-card .absolute.top-3.left-3 { display: none; } /* hide duplicate cat tag */
+.article-card:hover { box-shadow: var(--shadow-hover); border-color: var(--border-hover); transform: translateY(-2px); }
+.article-card .absolute.top-3.left-3 { display: none; }
 
-/* ── Form elements ─────────────────────────────────────────────────────────── */
+/* ─── Forms ────────────────────────────────────────────────────────────────── */
 .form-input {
-  width: 100%;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 0.5rem 0.875rem;
-  font-size: 0.875rem;
-  color: var(--text-primary);
-  font-family: var(--font-body);
-  transition: border-color 0.15s ease;
-  outline: none;
+  width: 100%; background: var(--bg-elevated); border: 1px solid var(--border);
+  border-radius: 9px; padding: 0.5rem 0.85rem; font-size: 0.875rem;
+  color: var(--text-primary); font-family: var(--font-body); transition: border-color 0.15s; outline: none;
 }
 .form-input:focus { border-color: var(--accent); background: var(--bg-surface); }
 .form-input::placeholder { color: var(--text-muted); }
+.form-input.font-mono { font-family: 'Courier New', monospace; font-size: 0.8rem; }
 
 .form-select {
-  width: 100%;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 0.5rem 0.875rem;
-  font-size: 0.875rem;
-  color: var(--text-primary);
-  font-family: var(--font-body);
-  outline: none;
-  cursor: pointer;
-  transition: border-color 0.15s ease;
+  width: 100%; background: var(--bg-elevated); border: 1px solid var(--border);
+  border-radius: 9px; padding: 0.5rem 0.85rem; font-size: 0.875rem;
+  color: var(--text-primary); font-family: var(--font-body); outline: none; cursor: pointer; transition: border-color 0.15s;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 0.75rem center; padding-right: 2rem;
 }
 .form-select:focus { border-color: var(--accent); }
 
 .form-label {
-  display: block;
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--text-secondary);
-  margin-bottom: 0.4rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  display: block; font-size: 0.72rem; font-weight: 700; color: var(--text-secondary);
+  margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 0.05em; font-family: var(--font-body);
 }
 
-/* ── Buttons ───────────────────────────────────────────────────────────────── */
-.btn-primary {
-  background: var(--accent);
-  color: white;
-  font-family: var(--font-display);
-  font-weight: 700;
-  padding: 0.625rem 1.25rem;
-  border-radius: 10px;
-  border: none;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  font-size: 0.875rem;
-  display: inline-flex; align-items: center; justify-content: center;
-  text-decoration: none;
-}
-.btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(59,130,246,0.4); }
-.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-
-.btn-outline {
-  background: transparent;
-  color: var(--text-secondary);
-  font-family: var(--font-display);
-  font-weight: 700;
-  padding: 0.625rem 1.25rem;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  cursor: pointer;
-  transition: all 0.15s ease;
-  font-size: 0.875rem;
-  display: inline-flex; align-items: center; justify-content: center;
-}
-.btn-outline:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
-.btn-outline:disabled { opacity: 0.6; cursor: not-allowed; }
-
-/* ── Admin layout ──────────────────────────────────────────────────────────── */
-.admin-layout {
-  background: var(--bg-base);
-  min-height: 100vh;
-  display: flex;
-}
+/* ─── Admin layout ─────────────────────────────────────────────────────────── */
 .admin-sidebar {
-  width: 240px;
-  background: var(--bg-surface);
+  background: #080f1e;
   border-right: 1px solid var(--border);
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  overflow-y: auto;
 }
-.admin-content {
-  flex: 1;
-  padding: 2rem 1.5rem;
-  overflow: auto;
-  background: var(--bg-base);
-}
-.admin-nav-link {
-  display: flex;
-  align-items: center;
-  gap: 0.625rem;
-  padding: 0.625rem 1rem;
-  border-radius: 10px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  text-decoration: none;
-  transition: all 0.15s ease;
-  margin: 0.125rem 0;
-}
-.admin-nav-link:hover { background: var(--accent-glow); color: var(--accent); }
-.admin-nav-link.active { background: var(--accent-glow); color: var(--accent); }
+html:not(.dark) .admin-sidebar { background: #0f172a; }
 
-/* ── Prose (article body) ──────────────────────────────────────────────────── */
-.prose { color: var(--text-primary); line-height: 1.8; font-size: 1.05rem; }
+.sidebar-link {
+  display: flex; align-items: center; gap: 0.65rem;
+  padding: 0.55rem 1rem; margin: 0.1rem 0.5rem;
+  border-radius: 9px; font-size: 0.8rem; font-weight: 600;
+  color: #94a3b8; text-decoration: none; transition: all 0.15s;
+}
+.sidebar-link:hover { background: rgba(30,115,255,0.12); color: #e2e8f0; }
+.sidebar-link.active { background: rgba(30,115,255,0.18); color: #1E73FF; }
+
+/* ─── Prose (article body) ─────────────────────────────────────────────────── */
+.prose { color: var(--text-primary); line-height: 1.85; font-size: 1.05rem; font-family: var(--font-body); }
 .prose h2 { font-family: var(--font-display); font-size: 1.5rem; font-weight: 800; margin: 2rem 0 1rem; }
 .prose h3 { font-family: var(--font-display); font-size: 1.2rem; font-weight: 700; margin: 1.5rem 0 0.75rem; }
 .prose p { margin-bottom: 1.25rem; }
 .prose a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
-.prose a:hover { color: white; }
-.prose img { max-width: 100%; border-radius: 12px; margin: 1.5rem 0; }
-.prose blockquote { border-left: 3px solid var(--accent); padding: 0.75rem 1.25rem; margin: 1.5rem 0; color: var(--text-secondary); font-style: italic; background: var(--accent-glow); border-radius: 0 8px 8px 0; }
+.prose a:hover { color: var(--text-primary); }
+.prose img { max-width: 100%; border-radius: 10px; margin: 1.5rem 0; }
+.prose blockquote {
+  border-left: 3px solid var(--accent); padding: 0.75rem 1.25rem; margin: 1.5rem 0;
+  color: var(--text-secondary); font-style: italic; background: var(--accent-glow); border-radius: 0 8px 8px 0;
+}
 .prose ul, .prose ol { padding-left: 1.5rem; margin-bottom: 1.25rem; }
 .prose li { margin-bottom: 0.5rem; }
 .prose strong { color: var(--text-primary); font-weight: 700; }
 .prose hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
 
-/* ── Animations ────────────────────────────────────────────────────────────── */
+/* ─── Animations ───────────────────────────────────────────────────────────── */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(12px); }
+  from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-.fade-in { animation: fadeIn 0.35s ease both; }
-
-/* ── Dark mode (class-based) ───────────────────────────────────────────────── */
-html.dark { color-scheme: dark; }
-html:not(.dark) {
-  --bg-base: #f0f4f8;
-  --bg-surface: #ffffff;
-  --bg-elevated: #f1f5f9;
-  --bg-card: #ffffff;
-  --border: rgba(0,0,0,0.08);
-  --border-hover: rgba(59,130,246,0.4);
-  --text-primary: #0f172a;
-  --text-secondary: #475569;
-  --text-muted: #94a3b8;
-  --accent-glow: rgba(59,130,246,0.07);
-  --shadow-card: 0 2px 12px rgba(0,0,0,0.07);
-  --shadow-hover: 0 8px 28px rgba(0,0,0,0.12), 0 0 0 1px rgba(59,130,246,0.15);
-}
-html:not(.dark) .nexus-header {
-  background: rgba(255,255,255,0.97);
-}
-html:not(.dark) .nexus-footer { background: #e2e8f0; }
-html:not(.dark) .nexus-logo { color: #0f172a; }
-html:not(.dark) .nexus-nav-link { color: #475569; }
-html:not(.dark) .nexus-nav-link:hover, html:not(.dark) .nexus-nav-link.active { color: var(--accent); }
-html:not(.dark) .nexus-trending-rank { color: #e2e8f0; }
+.fade-in { animation: fadeIn 0.3s ease both; }

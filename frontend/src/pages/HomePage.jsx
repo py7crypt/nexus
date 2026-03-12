@@ -287,35 +287,6 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ── TRENDING ─────────────────────────────────────────────────── */}
-        <section className="mb-8">
-          <div className="nexus-section-header mb-4">
-            <h2 className="nexus-section-title">
-              <span className="nexus-section-accent"/>
-              🔥 Trending Now
-            </h2>
-          </div>
-          <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none -mx-4 px-4">
-            {trending.map((a, i) => (
-              <Link key={a.id} to={`/article/${a.id}`}
-                className="nexus-trending-card group flex-shrink-0 w-48 relative overflow-hidden rounded-xl">
-                <div className="h-32 overflow-hidden">
-                  {a.cover_image
-                    ? <img src={a.cover_image} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"/>
-                    : <div className="w-full h-full nexus-img-placeholder"/>
-                  }
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-black/10"/>
-                </div>
-                <div className="absolute inset-0 flex flex-col justify-end p-3">
-                  <span className="text-3xl font-black text-white/10 absolute top-2 right-3 select-none">{String(i+1).padStart(2,'0')}</span>
-                  <span className="nexus-cat-badge mb-1 self-start" style={{ background: catColor(a.category) }}>{a.category}</span>
-                  <h4 className="text-[11px] font-bold text-white line-clamp-2 group-hover:text-blue-300 transition-colors">{a.title}</h4>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section>
-
         {/* ── LATEST + RIGHT SIDEBAR ──────────────────────────────────── */}
         <div className="grid lg:grid-cols-[1fr_300px] xl:grid-cols-[1fr_320px] gap-8">
 
@@ -341,17 +312,47 @@ export default function HomePage() {
           {/* Right sidebar */}
           <aside className="space-y-5">
 
+            {/* Weather widget */}
+            <div className="nexus-sidebar-card overflow-hidden">
+              <div className="nexus-sidebar-header">
+                <span className="nexus-section-accent mr-2"/>
+                Weather
+              </div>
+              <iframe
+                src="/widgets/weather.html"
+                title="Weather"
+                className="w-full border-0"
+                style={{ height: '200px' }}
+                loading="lazy"
+              />
+            </div>
+
             {/* Trending posts */}
             <div className="nexus-sidebar-card">
               <div className="nexus-sidebar-header">
                 <span className="nexus-section-accent mr-2"/>
                 Trending Posts
               </div>
-              <div className="p-4 space-y-1 divide-y divide-white/5">
+              <div className="p-3 space-y-0 divide-y" style={{ borderColor: 'var(--border)' }}>
                 {trending.slice(0, 6).map((a, i) => (
-                  <div key={a.id} className="pt-1 first:pt-0"><TrendingItem article={a} rank={i+1}/></div>
+                  <div key={a.id}><TrendingItem article={a} rank={i+1}/></div>
                 ))}
               </div>
+            </div>
+
+            {/* Sudoku game */}
+            <div className="nexus-sidebar-card overflow-hidden">
+              <div className="nexus-sidebar-header">
+                <span className="nexus-section-accent mr-2"/>
+                Sudoku
+              </div>
+              <iframe
+                src="/widgets/sudoku.html"
+                title="Sudoku"
+                className="w-full border-0"
+                style={{ height: '340px' }}
+                loading="lazy"
+              />
             </div>
 
             {/* Categories */}
@@ -377,7 +378,7 @@ export default function HomePage() {
                 Tags
               </div>
               <div className="p-4 flex flex-wrap gap-1.5">
-                {['Technology', 'AI', 'Science', 'Health', 'Climate', 'Finance', 'Space', 'Politics', 'Travel', 'Culture', 'Business', 'Innovation'].map(tag => (
+                {['Technology','AI','Science','Health','Climate','Finance','Space','Politics','Travel','Culture','Business','Innovation'].map(tag => (
                   <span key={tag} className="nexus-tag">{tag}</span>
                 ))}
               </div>
@@ -386,11 +387,13 @@ export default function HomePage() {
             {/* Newsletter */}
             <div className="nexus-newsletter-card">
               <div className="text-2xl mb-2">✉️</div>
-              <h3 className="font-black text-white text-base mb-1">Stay Informed</h3>
-              <p className="text-xs text-blue-200/70 mb-4">Get NEXUS top stories every morning. No spam.</p>
+              <h3 style={{ fontFamily: 'var(--font-display)' }} className="font-black text-white text-base mb-1">Stay Informed</h3>
+              <p className="text-xs mb-4" style={{ color: 'rgba(147,197,253,0.75)' }}>Get NEXUS top stories every morning. No spam.</p>
               <input type="email" placeholder="Enter your email"
-                className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-sm text-white placeholder-white/40 focus:outline-none focus:border-blue-400 mb-2"/>
-              <button className="w-full py-2.5 bg-white text-blue-700 rounded-lg text-sm font-black hover:bg-blue-50 transition-colors">
+                className="w-full rounded-lg px-3 py-2 text-sm text-white mb-2"
+                style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)' }}/>
+              <button className="w-full py-2.5 bg-white rounded-lg text-sm font-bold transition-colors hover:bg-blue-50"
+                style={{ color: 'var(--accent)', fontFamily: 'var(--font-body)' }}>
                 Subscribe Free
               </button>
             </div>
