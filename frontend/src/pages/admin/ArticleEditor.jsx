@@ -392,12 +392,11 @@ export default function ArticleEditor() {
         </div>
       </div>
 
-      {showNews && (
-        <NewsScraperModal
-          onFill={handleNewsFill}
-          onClose={() => setShowNews(false)}
-        />
-      )}
+      <NewsScraperModal
+        isOpen={showNews}
+        onFill={handleNewsFill}
+        onClose={() => setShowNews(false)}
+      />
     </div>
   )
 }
