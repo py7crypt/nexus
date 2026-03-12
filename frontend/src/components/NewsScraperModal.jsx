@@ -215,34 +215,54 @@ export default function NewsScraperModal({ isOpen, onFill, onClose }) {
                   disabled={!!fetching}
                   className="w-full text-left p-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/20 transition-all group disabled:opacity-50">
                   <div className="flex gap-3">
-                    {a.thumb && (
-                      <div className="w-20 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-slate-100 dark:bg-slate-800">
+                    {/* Thumbnail */}
+                    {a.thumb ? (
+                      <div className="w-24 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-slate-100 dark:bg-slate-800">
                         <img src={a.thumb} alt="" className="w-full h-full object-cover"/>
+                      </div>
+                    ) : (
+                      <div className="w-24 h-20 rounded-lg flex-shrink-0 bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-2xl">
+                        📰
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
+                      {/* Title */}
                       <div className="text-sm font-semibold leading-snug group-hover:text-blue-600 transition-colors line-clamp-2">
                         {a.title}
                       </div>
+                      {/* Author — shown prominently right under title */}
+                      {a.author && (
+                        <div className="flex items-center gap-1 mt-1">
+                          <span className="text-[10px] text-slate-400">✍️</span>
+                          <span className="text-xs font-medium text-slate-600 dark:text-slate-300">{a.author}</span>
+                        </div>
+                      )}
+                      {/* Excerpt */}
                       {a.excerpt && (
                         <div className="text-xs text-slate-400 mt-1 line-clamp-1">{a.excerpt}</div>
                       )}
+                      {/* Meta row */}
                       <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                         {a.category && (
-                          <span className="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full text-white"
+                          <span className="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full text-white flex-shrink-0"
                             style={{ background: catColor(a.category) }}>
                             {a.category}
                           </span>
                         )}
-                        {a.source   && <span className="text-xs font-medium text-blue-500">{a.source}</span>}
-                        {a.author   && <span className="text-xs text-slate-400">by {a.author}</span>}
-                        {a.pub_date && <span className="text-xs text-slate-400">{new Date(a.pub_date).toLocaleDateString()}</span>}
+                        {a.source && (
+                          <span className="text-xs font-semibold text-blue-500 flex-shrink-0">{a.source}</span>
+                        )}
+                        {a.pub_date && (
+                          <span className="text-xs text-slate-400 flex-shrink-0">
+                            {new Date(a.pub_date).toLocaleDateString(undefined, {month:'short',day:'numeric',year:'numeric'})}
+                          </span>
+                        )}
                       </div>
                     </div>
-                    <div className="flex-shrink-0 self-center">
+                    <div className="flex-shrink-0 self-center pl-2">
                       {fetching === a.url
                         ? <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"/>
-                        : <span className="text-xs text-blue-500 font-bold opacity-0 group-hover:opacity-100 transition-opacity">Import →</span>
+                        : <span className="text-xs text-blue-500 font-bold opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Import →</span>
                       }
                     </div>
                   </div>
