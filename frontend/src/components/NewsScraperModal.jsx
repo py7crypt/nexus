@@ -7,7 +7,7 @@ import { catColor } from '../utils'
 const CATEGORIES = ['All','Technology','Science','Business','Health','Politics','Sports','Entertainment','Travel','Culture']
 
 export default function NewsScraperModal({ isOpen, onFill, onClose }) {
-  // ALL hooks must be before any conditional return
+  // ── All hooks before any conditional return ──────────────────────────────
   const [articles, setArticles] = useState([])
   const [sources,  setSources]  = useState([])
   const [loading,  setLoading]  = useState(false)
@@ -17,21 +17,24 @@ export default function NewsScraperModal({ isOpen, onFill, onClose }) {
   const [search,   setSearch]   = useState('')
   const [error,    setError]    = useState('')
 
-  // Load sources once on mount
+  // Load enabled sources once
   useEffect(() => {
     fetchScrapeSettings()
       .then(d => { if (d.success) setSources(d.settings.sites.filter(s => s.enabled)) })
       .catch(() => {})
   }, [])
 
-  // Load articles when modal opens
+  // Reload articles every time modal opens, reset filters
   useEffect(() => {
     if (!isOpen) return
-    setSourceId('all'); setCategory('All'); setSearch(''); setArticles([])
+    setSourceId('all')
+    setCategory('All')
+    setSearch('')
+    setArticles([])
     doLoad('all', 'All', '')
   }, [isOpen])
 
-  // NOW safe to return null after all hooks
+  // ── Safe to return null after all hooks ──────────────────────────────────
   if (!isOpen) return null
 
   async function doLoad(sid, cat, q) {
@@ -87,17 +90,17 @@ export default function NewsScraperModal({ isOpen, onFill, onClose }) {
         headers: { Authorization: `Bearer ${token}` }
       }).then(r => r.json())
 
-      const meta     = res.success ? res.meta : {}
+      const meta      = res.success ? res.meta : {}
       const activeSrc = sources.find(s => s.id === sourceId)
-      const title    = meta.title       || article.title   || ''
-      const excerpt  = meta.excerpt     || article.excerpt || ''
-      const image    = meta.cover_image || article.thumb   || ''
-      const author   = meta.author      || article.author  || ''
-      const cat      = activeSrc?.category || meta.category || article.category || ''
-      const tags     = [...new Set([...(meta.tags || []), ...(article.tags || [])])].slice(0, 6)
-      const seoTitle = title.length > 60 ? title.slice(0, 57).replace(/\s+\S*$/, '') + '...' : title
-      const seoDesc  = excerpt.length > 155 ? excerpt.slice(0, 152).replace(/\s+\S*$/, '') + '...' : excerpt
-      const content  = meta.content_html
+      const title     = meta.title       || article.title   || ''
+      const excerpt   = meta.excerpt     || article.excerpt || ''
+      const image     = meta.cover_image || article.thumb   || ''
+      const author    = meta.author      || article.author  || ''
+      const cat       = activeSrc?.category || meta.category || article.category || ''
+      const tags      = [...new Set([...(meta.tags || []), ...(article.tags || [])])].slice(0, 6)
+      const seoTitle  = title.length > 60   ? title.slice(0, 57).replace(/\s+\S*$/, '')   + '...' : title
+      const seoDesc   = excerpt.length > 155 ? excerpt.slice(0, 152).replace(/\s+\S*$/, '') + '...' : excerpt
+      const content   = meta.content_html
         || `<p>${excerpt}</p>\n<hr/>\n<p><small>📰 Source: <a href="${article.url}" target="_blank">${article.source || ''}</a></small></p>`
 
       onFill({ title, excerpt, cover_image: image, author, category: cat, tags,
@@ -142,6 +145,8 @@ export default function NewsScraperModal({ isOpen, onFill, onClose }) {
 
         {/* Filters */}
         <div className="px-6 pt-3 pb-2 border-b border-slate-200 dark:border-slate-700 flex-shrink-0 space-y-2">
+
+          {/* Search */}
           <form onSubmit={handleSearch} className="flex gap-2">
             <input value={search} onChange={e => setSearch(e.target.value)}
               placeholder="Search any topic..." className="form-input text-sm flex-1"/>
@@ -155,17 +160,18 @@ export default function NewsScraperModal({ isOpen, onFill, onClose }) {
           {/* Source tabs */}
           <div className="flex gap-1.5 flex-wrap items-center">
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mr-1">Source:</span>
-            {['all', ...sources.map(s => s.id)].map(sid => {
-              const s = sources.find(x => x.id === sid)
-              return (
-                <button key={sid} onClick={() => handleSourceChange(sid)}
-                  className={`text-xs px-2.5 py-1 rounded-full font-medium transition-colors ${
-                    sourceId === sid ? 'bg-slate-700 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700'
-                  }`}>
-                  {s ? s.name : 'All'}
-                </button>
-              )
-            })}
+            <button onClick={() => handleSourceChange('all')}
+              className={`text-xs px-2.5 py-1 rounded-full font-medium transition-colors ${
+                sourceId === 'all' ? 'bg-slate-700 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700'
+              }`}>All</button>
+            {sources.map(s => (
+              <button key={s.id} onClick={() => handleSourceChange(s.id)}
+                className={`text-xs px-2.5 py-1 rounded-full font-medium transition-colors ${
+                  sourceId === s.id ? 'bg-slate-700 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700'
+                }`}>
+                {s.name}
+              </button>
+            ))}
           </div>
 
           {/* Category tabs */}
@@ -183,7 +189,7 @@ export default function NewsScraperModal({ isOpen, onFill, onClose }) {
           </div>
         </div>
 
-        {/* Articles */}
+        {/* Articles list */}
         <div className="flex-1 overflow-y-auto px-6 py-3">
           {loading ? (
             <div className="flex items-center justify-center py-16 gap-3 text-slate-400">
@@ -228,8 +234,8 @@ export default function NewsScraperModal({ isOpen, onFill, onClose }) {
                             {a.category}
                           </span>
                         )}
-                        {a.source && <span className="text-xs font-medium text-blue-500">{a.source}</span>}
-                        {a.author && <span className="text-xs text-slate-400">by {a.author}</span>}
+                        {a.source   && <span className="text-xs font-medium text-blue-500">{a.source}</span>}
+                        {a.author   && <span className="text-xs text-slate-400">by {a.author}</span>}
                         {a.pub_date && <span className="text-xs text-slate-400">{new Date(a.pub_date).toLocaleDateString()}</span>}
                       </div>
                     </div>
