@@ -160,15 +160,25 @@ export default function RightSidebar({ variant = 'home', article = null }) {
       {socialLinks.length > 0 && (
         <SidebarCard header="Follow Us">
           <div className="p-3 flex flex-wrap gap-2">
-            {socialLinks.map(l => (
-              <a key={l.id} href={l.url || '#'} target="_blank" rel="noreferrer" title={l.label}
-                className="social-icon-btn">
-                {l.icon
-                  ? <img src={l.icon} alt={l.label} style={{ width:'16px', height:'16px', objectFit:'contain' }}/>
-                  : <span style={{ fontSize:'0.62rem', fontWeight:700, color:'var(--text-muted)' }}>{l.label?.[0]?.toUpperCase()||'?'}</span>
-                }
-              </a>
-            ))}
+            {socialLinks.map(l => {
+              // Derive a simpleicons URL from the label if no icon provided
+              const slug = l.label?.toLowerCase().replace(/\s+/g, '')
+              const iconUrl = l.icon || `https://cdn.simpleicons.org/${slug}`
+              return (
+                <a key={l.id} href={l.url || '#'} target="_blank" rel="noreferrer" title={l.label}
+                  className="social-icon-btn">
+                  <img
+                    src={iconUrl}
+                    alt={l.label}
+                    style={{ width:'16px', height:'16px', objectFit:'contain' }}
+                    onError={e => { e.target.style.display='none'; e.target.nextSibling.style.display='block' }}
+                  />
+                  <span style={{ display:'none', fontSize:'0.62rem', fontWeight:700, color:'var(--text-muted)' }}>
+                    {l.label?.[0]?.toUpperCase()||'?'}
+                  </span>
+                </a>
+              )
+            })}
           </div>
         </SidebarCard>
       )}
@@ -202,15 +212,6 @@ export default function RightSidebar({ variant = 'home', article = null }) {
               className="nexus-cat-pill" style={{ '--cat-color': cat.color }}>
               {cat.icon} {cat.name}
             </Link>
-          ))}
-        </div>
-      </SidebarCard>
-
-      {/* 6. Tags */}
-      <SidebarCard header="Tags">
-        <div className="p-3 flex flex-wrap gap-1.5">
-          {['Technology','AI','Science','Health','Climate','Finance','Space','Politics','Travel','Culture','Business','Innovation'].map(tag => (
-            <span key={tag} className="nexus-tag">{tag}</span>
           ))}
         </div>
       </SidebarCard>

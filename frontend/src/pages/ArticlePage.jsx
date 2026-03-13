@@ -90,14 +90,9 @@ export default function ArticlePage() {
             </div>
           </div>
 
-          {/* Content */}
-          <div className="prose prose-slate dark:prose-invert max-w-none
-            prose-headings:font-display prose-headings:font-bold
-            prose-h2:text-2xl prose-h2:mt-8 prose-h2:mb-3
-            prose-h3:text-xl prose-h3:mt-6 prose-h3:mb-2
-            prose-p:leading-relaxed prose-p:text-slate-700 dark:prose-p:text-slate-300
-            prose-blockquote:border-l-blue-500 prose-blockquote:bg-blue-50 dark:prose-blockquote:bg-blue-950/30
-            prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline"
+          {/* Content — rendered exactly as written in the editor, no extra CSS */}
+          <div
+            className="article-content"
             dangerouslySetInnerHTML={{ __html: a.content }}
           />
 

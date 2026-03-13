@@ -182,7 +182,7 @@ export default function HomePage() {
       <div className="nexus-container py-6">
 
         {/* ── HERO SECTION ─────────────────────────────────────────────── */}
-        <section className="grid lg:grid-cols-[1fr_300px] xl:grid-cols-[1fr_340px] gap-4 mb-8">
+        <section className="mb-8">
 
           {/* Left: big hero */}
           <div className="grid grid-rows-[minmax(380px,480px)_auto] gap-3">
@@ -203,32 +203,6 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Right sidebar */}
-          <div className="flex flex-col gap-4">
-
-            {/* Weather */}
-            {/* Weather iframe widget */}
-            <div className="nexus-sidebar-card overflow-hidden">
-              <div className="nexus-sidebar-header">
-                <span className="nexus-section-accent mr-2"/>
-                Weather
-              </div>
-              <iframe src="/widgets/weather.html" title="Weather" className="w-full border-0" style={{ height: '200px' }} loading="lazy"/>
-            </div>
-
-            {/* Trending Articles feed */}
-            <div className="nexus-sidebar-card flex-1">
-              <div className="nexus-sidebar-header">
-                <span className="nexus-section-accent mr-2"/>
-                Trending Articles
-              </div>
-              <div className="px-3 py-1 divide-y" style={{ borderColor: 'var(--border)' }}>
-                {trending.slice(0, 5).map((a, i) => (
-                  <div key={a.id}><TrendingItem article={a} rank={i+1}/></div>
-                ))}
-              </div>
-            </div>
-          </div>
         </section>
 
         {/* ── LATEST + RIGHT SIDEBAR ──────────────────────────────────── */}

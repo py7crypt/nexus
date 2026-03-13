@@ -92,13 +92,12 @@ h1,h2,h3,h4,h5,h6 { font-family: var(--font-display); line-height: 1.25; color: 
   font-family: var(--font-display);
   font-size: 1.5rem;
   font-weight: 900;
-  font-style: italic;
   letter-spacing: -0.02em;
   color: var(--text-primary);
   text-decoration: none;
   line-height: 1;
 }
-.nexus-logo span { color: var(--accent); font-style: normal; }
+.nexus-logo span { color: var(--accent); }
 
 .nexus-nav-link {
   font-family: var(--font-body);
@@ -422,12 +421,25 @@ h1,h2,h3,h4,h5,h6 { font-family: var(--font-display); line-height: 1.25; color: 
 .prose img { max-width: 100%; border-radius: 9px; margin: 1.4rem 0; }
 .prose blockquote {
   border-left: 3px solid var(--accent); padding: 0.7rem 1.1rem; margin: 1.4rem 0;
-  color: var(--text-secondary); font-style: italic; background: var(--accent-glow); border-radius: 0 7px 7px 0;
+  color: var(--text-secondary); background: var(--accent-glow); border-radius: 0 7px 7px 0;
 }
 .prose ul, .prose ol { padding-left: 1.4rem; margin-bottom: 1.2rem; }
 .prose li { margin-bottom: 0.45rem; color: var(--text-primary); }
 .prose strong { color: var(--text-primary); font-weight: 700; }
 .prose hr { border: none; border-top: 1px solid var(--border); margin: 1.8rem 0; }
+
+
+/* ─── ARTICLE CONTENT (editor output, no overrides) ──────────────────────── */
+.article-content {
+  color: var(--text-primary);
+  line-height: 1.85;
+  font-size: 1.05rem;
+  font-family: var(--font-body);
+  word-break: break-word;
+}
+.article-content img { max-width: 100%; height: auto; border-radius: 8px; margin: 1rem 0; }
+.article-content a { color: var(--accent); }
+.article-content a:hover { text-decoration: underline; }
 
 /* ─── ANIMATIONS ─────────────────────────────────────────────────────────── */
 @keyframes fadeIn {
