@@ -209,6 +209,7 @@ h1,h2,h3,h4,h5,h6 { line-height: 1.25; color: var(--text-primary); }
   overflow: hidden; box-shadow: var(--shadow-card);
   transition: all 0.22s;
   display: flex; flex-direction: column;
+  height: 100%;   /* fills grid row so all cards equal height */
 }
 .nexus-grid-card:hover {
   box-shadow: var(--shadow-hover);
@@ -653,7 +654,7 @@ h1,h2,h3,h4,h5,h6 { line-height: 1.25; color: var(--text-primary); }
 
 /* ─── TRENDING CARD (RightSidebar) ──────────────────────────────────────────── */
 .trending-card {
-  padding: 0.6rem 0.5rem;
+  padding: 0.5rem 0.4rem;
   border-radius: 9px;
   transition: background 0.15s;
 }
@@ -661,31 +662,13 @@ h1,h2,h3,h4,h5,h6 { line-height: 1.25; color: var(--text-primary); }
   background: var(--accent-glow);
 }
 
-.trending-rank-badge {
-  position: relative;
-  width: 28px;
-  height: 28px;
+/* Image thumbnail replaces the rank number slot */
+.trending-thumb {
+  width: 56px;
+  height: 52px;
   border-radius: 8px;
-  border: 1.5px solid var(--rank-color, var(--border-strong));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
   overflow: hidden;
-  margin-top: 2px;
-}
-.trending-rank-num {
-  font-size: 0.7rem;
-  font-weight: 800;
-  color: var(--rank-color, var(--text-muted));
-  position: relative;
-  z-index: 1;
-  line-height: 1;
-}
-.trending-rank-glow {
-  position: absolute;
-  inset: 0;
-  opacity: 0.12;
+  flex-shrink: 0;
 }
 
 .trending-cat-badge {

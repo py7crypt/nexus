@@ -151,12 +151,12 @@ function HeroSlider({ articles }) {
     </div>
   )
 }
-function GridCard({ article, variant = 'default' }) {
+function GridCard({ article }) {
   if (!article) return null
-  const isLarge = variant === 'large'
   return (
-    <Link to={`/article/${article.id}`} className={`nexus-grid-card group block`}>
-      <div className={`overflow-hidden relative ${isLarge ? 'h-48' : 'h-36'}`}>
+    <Link to={`/article/${article.id}`} className="nexus-grid-card group block" style={{ height: '100%' }}>
+      {/* Fixed-height image — same on every card */}
+      <div className="overflow-hidden relative" style={{ height: '160px', flexShrink: 0 }}>
         {article.cover_image
           ? <img src={article.cover_image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy"/>
           : <div className="w-full h-full nexus-img-placeholder flex items-center justify-center text-3xl">📰</div>
@@ -166,18 +166,19 @@ function GridCard({ article, variant = 'default' }) {
         </span>
         <div className="absolute top-2 right-2"><LikeButton articleId={article.id}/></div>
       </div>
+      {/* Body */}
       <div className="p-3 flex flex-col flex-1">
-        <h3 className={`font-semibold leading-snug line-clamp-2 group-hover:text-blue-500 transition-colors ${isLarge ? 'text-sm' : 'text-xs'}`}
+        <h3 className="font-display text-sm font-bold leading-snug line-clamp-2 group-hover:text-blue-500 transition-colors mb-1"
           style={{ color: 'var(--text-primary)' }}>
           {article.title}
         </h3>
-        {isLarge && article.excerpt && (
-          <p className="text-xs line-clamp-2 mt-1.5 leading-relaxed"
+        {article.excerpt && (
+          <p className="text-xs line-clamp-2 leading-relaxed mb-2"
             style={{ color: 'var(--text-secondary)' }}>
-            {article.excerpt.replace(/<[^>]*>/g,'')}
+            {article.excerpt.replace(/<[^>]*>/g, '')}
           </p>
         )}
-        <div className="flex items-center justify-between mt-auto pt-2 text-xs">
+        <div className="flex items-center justify-between mt-auto pt-2 text-xs" style={{ borderTop: '1px solid var(--border)' }}>
           <span className="font-medium truncate" style={{ color: 'var(--text-secondary)' }}>{article.author}</span>
           <span className="flex-shrink-0 ml-2" style={{ color: 'var(--text-muted)' }}>{timeAgo(article.created_at)}</span>
         </div>
@@ -185,6 +186,7 @@ function GridCard({ article, variant = 'default' }) {
     </Link>
   )
 }
+
 
 function TrendingItem({ article, rank }) {
   if (!article) return null
@@ -234,32 +236,33 @@ export default function HomePage() {
     <div className="nexus-home">
       <div className="nexus-container py-6">
 
-        {/* ── HERO + RIGHT SIDEBAR side-by-side ─────────────────────── */}
-        <section className="grid lg:grid-cols-[1fr_300px] xl:grid-cols-[1fr_320px] gap-6 mb-8 items-start">
-          <HeroSlider articles={articles}/>
-          <RightSidebar variant="home"/>
-        </section>
+        {/* ── TWO-COLUMN: [Slider + Latest] | [RightSidebar] ─────────── */}
+        <div className="grid lg:grid-cols-[1fr_300px] xl:grid-cols-[1fr_320px] gap-6 items-start">
 
-        {/* ── LATEST ARTICLES ──────────────────────────────────────────── */}
-
-          {/* Main content */}
-        <div>
-            {/* Latest articles grid */}
-        {/* ── LATEST ARTICLES ──────────────────────────────────────────── */}
+          {/* LEFT: Slider then Latest Articles */}
           <div>
-            <div className="nexus-section-header mb-5">
+            {/* Hero Slider */}
+            <div className="mb-6">
+              <HeroSlider articles={articles}/>
+            </div>
+
+            {/* Latest Articles */}
+            <div className="nexus-section-header mb-4">
               <h2 className="nexus-section-title">
                 <span className="nexus-section-accent"/>
                 Latest Articles
               </h2>
             </div>
-            <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4 mb-10">
-              {latest.map((a, i) => <GridCard key={a.id} article={a} variant={i === 0 ? 'large' : 'default'}/>)}
+            <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4 items-stretch">
+              {latest.map(a => <GridCard key={a.id} article={a}/>)}
             </div>
           </div>
-          <RightSidebar variant="home" />
+
+          {/* RIGHT: Sidebar */}
+          <RightSidebar variant="home"/>
         </div>
+
       </div>
-  </div>
+    </div>
   )
 }

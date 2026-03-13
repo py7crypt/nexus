@@ -25,21 +25,16 @@ function SidebarCard({ header, children, className = '' }) {
 function TrendingItem({ article, rank }) {
   if (!article) return null
   const accent = catColor(article.category)
-  const isTop3 = rank <= 3
   return (
     <Link to={`/article/${article.id}`} className="trending-card group block" style={{ textDecoration: 'none' }}>
       <div className="flex gap-3 items-start">
-        {/* Rank badge */}
-        <div className="trending-rank-badge flex-shrink-0" style={{ '--rank-color': isTop3 ? accent : 'var(--border-strong)' }}>
-          <span className="trending-rank-num">{rank}</span>
-          {isTop3 && <div className="trending-rank-glow" style={{ background: accent }}/>}
+        {/* Image takes the rank slot — always shown */}
+        <div className="trending-thumb flex-shrink-0">
+          {article.cover_image
+            ? <img src={article.cover_image} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"/>
+            : <div className="w-full h-full flex items-center justify-center text-lg nexus-img-placeholder">📰</div>
+          }
         </div>
-        {/* Thumb */}
-        {article.cover_image && (
-          <div className="w-14 h-12 rounded-lg overflow-hidden flex-shrink-0">
-            <img src={article.cover_image} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"/>
-          </div>
-        )}
         {/* Text */}
         <div className="flex-1 min-w-0">
           <span className="trending-cat-badge" style={{ color: accent, borderColor: accent + '44', background: accent + '14' }}>
